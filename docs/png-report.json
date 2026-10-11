@@ -1,0 +1,21 @@
+{
+  "browser": "156.0.8078.4",
+  "passed": 10,
+  "checks": [
+    "real browser-generated PNG validates with correct dimensions",
+    "PNG upload rejects CRC corruption before project mutation",
+    "Image is not allocated for oversized IHDR or corrupt base64",
+    "oversized upload size rejects before reading a File buffer",
+    "PNG scanline/deflate corruption rejects without browser fallback",
+    "binary project loading rejects actual-dimension metadata spoofing atomically",
+    "both browser exporters reject corrupt textures before decoding or exporting",
+    "corrupt recovery PNG is retained and cannot replace the scene",
+    "project aggregate pixel preflight rejects before IDAT inflation",
+    "no unexpected runtime errors"
+  ],
+  "expectedUploadErrors": [
+    "[Tileplane] Atlas import failed: PngValidationError: PNG validation: CRC mismatch in IEND\n    at fail (http://127.0.0.1:4183/src/core/png.ts:24:9)\n    at validatePngBytes (http://127.0.0.1:4183/src/core/png.ts:179:72)\n    at AtlasPanel.importFile (http://127.0.0.1:4183/src/ui/atlasPanel.ts:174:20)",
+    "[Tileplane] Atlas import failed: Error: PNG exceeds byte budget\n    at AtlasPanel.importFile (http://127.0.0.1:4183/src/ui/atlasPanel.ts:172:50)\n    at HTMLInputElement.<anonymous> (http://127.0.0.1:4183/src/ui/atlasPanel.ts:59:24)\n    at eval (eval at evaluate (:370:30), <anonymous>:1:287)\n    at UtilityScript.evaluate (<anonymous>:372:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)"
+  ],
+  "unexpectedErrors": []
+}

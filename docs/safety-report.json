@@ -1,0 +1,22 @@
+{
+  "browser": "156.0.8078.4",
+  "passed": 15,
+  "checks": [
+    "confirmation blocks destructive, undo, mode and save shortcuts",
+    "modal traps focus and restores editor interactivity on Escape",
+    "Help uses the same keyboard and focus isolation",
+    "invalid tile size and margin roll back atomically with field feedback",
+    "Save still downloads after a rejected setting change",
+    "unresolved recovery survives fresh editing and a second reload",
+    "Restore prompts for fresh edits; Cancel preserves both documents",
+    "accepted restoration resolves only the protected copy and stays dirty",
+    "autosave resumes with new valid edits after recovery resolution",
+    "pending recovery copy cannot be overwritten by current-slot writes",
+    "Discard requires confirmation and preserves a newer current-slot record",
+    "stale recovery decisions reject without deleting the current slot",
+    "invalid saved recovery is retained with backup rather than auto-cleared",
+    "over-depth project files reject quickly without replacing the open scene",
+    "no uncaught errors or console errors during the safety workflows"
+  ],
+  "errors": []
+}

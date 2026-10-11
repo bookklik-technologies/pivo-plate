@@ -1,0 +1,28 @@
+{
+  "browser": "156.0.8078.4",
+  "passed": 21,
+  "checks": [
+    "erase rail is Lucide-backed and B/D toggle the real tool",
+    "left drag previews without mutating the document then commits one undo step",
+    "undo/redo restores whole erase stroke exactly",
+    "sparse pointer movement samples intermediate faces",
+    "Escape cancels erase preview and leaves history unchanged",
+    "pointercancel cancels erase without dirty/history changes",
+    "locked ancestors protect their faces during drag erase",
+    "Shift+right drag erases but does not pan the camera",
+    "ordinary right drag still pans and does not erase",
+    "right-click erase remains one undoable face",
+    "mode change cancels a pending erase gesture",
+    "empty erase stroke omits history",
+    "document/history changes cancel a pending erase preview",
+    "opening Help cancels pending erase without a history entry",
+    "hidden faces cannot be targeted for erasing",
+    "repeated canceled previews do not grow live GPU geometry",
+    "window focus loss cancels pending erasing",
+    "FPS chip reports actual finite measured frame intervals",
+    "hidden-page measurement pauses and resumes with a fresh window",
+    "FPS unavailable is explicit when WebGL cannot initialize",
+    "no unexpected runtime errors in erase/HUD workflows"
+  ],
+  "errors": []
+}

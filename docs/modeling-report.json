@@ -1,0 +1,17 @@
+{
+  "browser": "156.0.8078.4",
+  "passed": 10,
+  "checks": [
+    "Apply Brush is present and disabled without face selection",
+    "Edit Apply Brush remaps UVs without changing geometry in one transaction",
+    "Atlas Apply Brush uses quarter turns and flips",
+    "hidden-tab PNG import is fitted on first visible refresh",
+    "Apply Brush reassigns to imported atlas and respects ancestor locking",
+    "ordinary tab switching preserves manual atlas zoom",
+    "sidebar Frame selection moves the actual camera/target",
+    "plane tooltips match working X/Z/C shortcuts",
+    "deformed quad renderer and independently loaded GLB normals agree",
+    "no console or uncaught errors from modeling workflows"
+  ],
+  "errors": []
+}

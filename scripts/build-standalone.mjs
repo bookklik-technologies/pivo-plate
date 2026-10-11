@@ -1,0 +1,13 @@
+import { readFile, readdir, writeFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
+import path from 'node:path';
+const root=fileURLToPath(new URL('../',import.meta.url));
+const assets=await readdir(path.join(root,'dist/assets'));
+const javascript=assets.filter(n=>n.endsWith('.js'));
+if(javascript.length!==1) throw Error('Standalone build expects one JS bundle; update packager if code splitting changes');
+const js=(await readFile(path.join(root,'dist/assets',javascript[0]),'utf8')).replace(/<\/script/gi,'<\\/script');
+const css=(await Promise.all(assets.filter(n=>n.endsWith('.css')).map(n=>readFile(path.join(root,'dist/assets',n),'utf8')))).join('\n');
+const notices=(await Promise.all(['three-MIT.txt','fflate-MIT.txt','lucide-ISC-and-Feather-MIT.txt','pako-MIT-and-Zlib.txt','outfit-OFL-1.1.txt'].map(n=>readFile(path.join(root,'docs/licenses',n),'utf8')))).join('\n\n').replace(/--/g,'—');
+const html=`<!DOCTYPE html><!-- Third-party license notices\n${notices}\n--><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#101418"><title>PiVo Plate</title><style>${css}</style></head><body><div id="app"></div><script type="module">${js}</script></body></html>`;
+await writeFile(path.join(root,'dist/pivo-plate-standalone.html'),html);
+console.log('Standalone editor written: dist/pivo-plate-standalone.html ('+html.length+' chars)');

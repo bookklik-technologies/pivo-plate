@@ -1,0 +1,21 @@
+{
+  "buildMs": 331.9000000022352,
+  "memory": {
+    "kind": "WebGL",
+    "version": "WebGL2",
+    "drawCalls": 7,
+    "triangles": 40004,
+    "geometries": 5,
+    "textures": 3,
+    "cameras": "persp fov50"
+  },
+  "after": {
+    "kind": "WebGL",
+    "version": "WebGL2",
+    "drawCalls": 7,
+    "triangles": 40004,
+    "geometries": 5,
+    "textures": 3,
+    "cameras": "persp fov50"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "browser": "156.0.8078.4",
+  "passed": 6,
+  "checks": [
+    "the actual bundled Outfit variable face loads across used weights",
+    "UI controls/headings use Outfit while technical values remain monospace",
+    "light and dark sidebar text stays unclipped after font loading",
+    "menus and Help retain Outfit text and keyboard safety",
+    "refined type hierarchy uses readable sizes and distinct weights",
+    "no runtime font CDN requests or errors"
+  ],
+  "errors": [],
+  "remoteRequests": []
+}

@@ -1,0 +1,17 @@
+{
+  "browser": "156.0.8078.4",
+  "passed": 10,
+  "checks": [
+    "dark is the default and toggle uses Lucide",
+    "header switch applies light chrome and matching viewport without dirtying the model",
+    "light mode surfaces and key text have usable measured contrast",
+    "all light sidebar tabs and fields stay within layout bounds",
+    "light mode editing and undo retain normal behavior",
+    "light-mode Help uses the light palette and modal safety",
+    "theme preference survives reload on an ordinary origin",
+    "View menu switches back to dark and exposes current choice",
+    "denied preference storage still allows switching without errors",
+    "both themes capture correctly without runtime errors"
+  ],
+  "errors": []
+}

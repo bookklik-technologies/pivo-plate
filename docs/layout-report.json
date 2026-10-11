@@ -1,0 +1,195 @@
+{
+  "layouts": 21,
+  "errors": [],
+  "reports": [
+    {
+      "width": 1920,
+      "height": 1080,
+      "tab": "Atlas",
+      "clipped": [],
+      "tooSmall": [],
+      "sideWidth": 344,
+      "bodyOverflow": false
+    },
+    {
+      "width": 1920,
+      "height": 1080,
+      "tab": "Scene",
+      "clipped": [],
+      "tooSmall": [],
+      "sideWidth": 344,
+      "bodyOverflow": false
+    },
+    {
+      "width": 1920,
+      "height": 1080,
+      "tab": "Props",
+      "clipped": [],
+      "tooSmall": [],
+      "sideWidth": 344,
+      "bodyOverflow": false
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "tab": "Atlas",
+      "clipped": [],
+      "tooSmall": [],
+      "sideWidth": 344,
+      "bodyOverflow": false
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "tab": "Scene",
+      "clipped": [],
+      "tooSmall": [],
+      "sideWidth": 344,
+      "bodyOverflow": false
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "tab": "Props",
+      "clipped": [],
+      "tooSmall": [],
+      "sideWidth": 344,
+      "bodyOverflow": false
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "tab": "Atlas",
+      "clipped": [],
+      "tooSmall": [],
+      "sideWidth": 344,
+      "bodyOverflow": false
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "tab": "Scene",
+      "clipped": [],
+      "tooSmall": [],
+      "sideWidth": 344,
+      "bodyOverflow": false
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "tab": "Props",
+      "clipped": [],
+      "tooSmall": [],
+      "sideWidth": 344,
+      "bodyOverflow": false
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "tab": "Atlas",
+      "clipped": [],
+      "tooSmall": [],
+      "sideWidth": 320,
+      "bodyOverflow": false
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "tab": "Scene",
+      "clipped": [],
+      "tooSmall": [],
+      "sideWidth": 320,
+      "bodyOverflow": false
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "tab": "Props",
+      "clipped": [],
+      "tooSmall": [],
+      "sideWidth": 320,
+      "bodyOverflow": false
+    },
+    {
+      "width": 900,
+      "height": 700,
+      "tab": "Atlas",
+      "clipped": [],
+      "tooSmall": [],
+      "sideWidth": 320,
+      "bodyOverflow": false
+    },
+    {
+      "width": 900,
+      "height": 700,
+      "tab": "Scene",
+      "clipped": [],
+      "tooSmall": [],
+      "sideWidth": 320,
+      "bodyOverflow": false
+    },
+    {
+      "width": 900,
+      "height": 700,
+      "tab": "Props",
+      "clipped": [],
+      "tooSmall": [],
+      "sideWidth": 320,
+      "bodyOverflow": false
+    },
+    {
+      "width": 760,
+      "height": 640,
+      "tab": "Atlas",
+      "clipped": [],
+      "tooSmall": [],
+      "sideWidth": 320,
+      "bodyOverflow": false
+    },
+    {
+      "width": 760,
+      "height": 640,
+      "tab": "Scene",
+      "clipped": [],
+      "tooSmall": [],
+      "sideWidth": 320,
+      "bodyOverflow": false
+    },
+    {
+      "width": 760,
+      "height": 640,
+      "tab": "Props",
+      "clipped": [],
+      "tooSmall": [],
+      "sideWidth": 320,
+      "bodyOverflow": false
+    },
+    {
+      "width": 600,
+      "height": 700,
+      "tab": "Atlas",
+      "clipped": [],
+      "tooSmall": [],
+      "sideWidth": 320,
+      "bodyOverflow": false
+    },
+    {
+      "width": 600,
+      "height": 700,
+      "tab": "Scene",
+      "clipped": [],
+      "tooSmall": [],
+      "sideWidth": 320,
+      "bodyOverflow": false
+    },
+    {
+      "width": 600,
+      "height": 700,
+      "tab": "Props",
+      "clipped": [],
+      "tooSmall": [],
+      "sideWidth": 320,
+      "bodyOverflow": false
+    }
+  ]
+}
