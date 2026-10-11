@@ -32,7 +32,7 @@ import { buildSampleScene, makeDemoAtlas } from './ui/demoAssets';
 import { isModalOpen, mountModal, svgIcon, type Glyph, button, clearChildren, confirmModal, div, h, iconButton, ICONS, toast, toastError } from './ui/dom';
 
 import { applyRootTheme, readTheme, persistTheme, type Theme, type PreferenceStorage } from './ui/theme';
-import { menuGlyph } from './ui/icons';
+import { menuGlyph } from './ui/icons';import { showAboutModal } from './ui/about';
 
 /* ------------------------------------------------------------------ */
 /* shell                                                              */
@@ -1125,7 +1125,7 @@ function showHelp(): void {
 }
 
 function showAbout(): void {
-  confirmModal('PiVo Plate', 'An independent local-first tile-to-3D modeling editor. Original implementation; no third-party assets. Built with TypeScript, Three.js, fflate and Lucide icons.', 'Close', () => {});
+  showAboutModal();
 }
 
 /* ------------------------------------------------------------------ */
