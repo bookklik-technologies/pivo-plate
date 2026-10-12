@@ -303,11 +303,10 @@ async function initApp(): Promise<void> {
 /* ------------------------------------------------------------------ */
 
 function buildToolRail(): void {
-  const g1 = div('rail-group');
+  const g1 = h('div', { class: 'rail-group', role: 'group', 'aria-label': 'Painting tools' });
   const draw = railBtn('draw', ICONS.brush, 'Draw tiles (D)', () => {viewport.setEraseTool(false);propsPanel.setMode('draw');}, 'D');
-  const edit = railBtn('edit', ICONS.cursor, 'Edit selection (E / Tab)', () => propsPanel.setMode('edit'), 'E');
   const erase=railBtn('erase',ICONS.erase,'Erase faces (B) — left-drag; Shift+right-drag also erases',()=>{session.mode='draw';viewport.setEraseTool(true);refreshAll();},'B');
-  g1.append(draw,erase,edit);
+  g1.append(draw,erase);
 
   const g2 = div('rail-group');
   for (const p of ['XY', 'XZ', 'YZ'] as Plane[]) {
@@ -321,14 +320,14 @@ function buildToolRail(): void {
     g2.append(b);
   }
 
-  const g3 = div('rail-group');
+  const g3 = h('div', { class: 'rail-group', role: 'group', 'aria-label': 'Camera' });
   g3.append(
     railBtn('cam-persp', ICONS.camera, 'Perspective / Orthographic camera (P)', () => {
       viewport.setCameraKind(viewport.getCameraKind() === 'persp' ? 'ortho' : 'persp');
       refreshAll();
     }, 'P'),
   );
-  const g4 = div('rail-group');
+  const g4 = h('div', { class: 'rail-group', role: 'group', 'aria-label': 'View actions' });
   g4.append(
     railBtn('act-frame', ICONS.target, 'Frame selection (F)', () => viewport.frameSelection(), 'F'),
     railBtn('act-grid', ICONS.grid, 'Reset grid/crosshair to origin (G)', () => {
@@ -346,7 +345,7 @@ function railBtn(cls: string, icon: Glyph, title: string, onClick: () => void, k
   b.classList.add('rail-btn');
   b.dataset.rail = cls;
   if (kbdTag) {
-    const tag = h('span', { class: 'kbd-tag' }, kbdTag);
+    const tag = h('span', { class: 'kbd-tag', 'aria-hidden': 'true' }, kbdTag);
     b.append(tag);
   }
   b.addEventListener('click', onClick);
@@ -573,8 +572,12 @@ function refreshSessionUI(): void {
   for (const b of toolRail.querySelectorAll('[data-rail]')) {
     const el = b as HTMLButtonElement;
     const key = el.dataset.rail!;
-    el.classList.toggle('active',(key==='erase'&&session.mode==='draw'&&viewport.getEraseTool())||(key==='draw'&&session.mode==='draw'&&!viewport.getEraseTool())||(key==='edit'&&session.mode==='edit')||key===`plane-${session.plane}`);
+    const active = (key==='erase'&&session.mode==='draw'&&viewport.getEraseTool())||(key==='draw'&&session.mode==='draw'&&!viewport.getEraseTool())||key===`plane-${session.plane}`;
+    el.classList.toggle('active',active);
     if (key === 'cam-persp') el.classList.toggle('active-blue', viewport.getCameraKind() === 'ortho');
+    if (key === 'draw' || key === 'erase' || key === 'cam-persp') {
+      el.setAttribute('aria-pressed', String(key === 'cam-persp' ? viewport.getCameraKind() === 'ortho' : active));
+    }
   }
   // HUD values
   const set = (id: string, v: string): void => {

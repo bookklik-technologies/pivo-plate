@@ -91,12 +91,12 @@ export class PropertiesPanel {
     gridSec.append(h('label', { class: 'slider-row' }, tsLabel, tsInput, tsVal));
 
     /* ---- selection / edit tools ---- */
-    const segFace = div('seg');
+    const segFace = h('div', { class: 'rail-group suite-transform-tools', role: 'group', 'aria-label': 'Selection tools' });
     for (const [label, tool] of [['Select', 'select'], ['Move', 'translate'], ['Rotate', 'rotate'], ['Scale', 'scale']] as const) {
-      const b = button(`tool-${tool}`, label);
-      b.setAttribute('aria-label',label);b.title=label;
-      b.prepend(svgIcon({select:ICONS.cursor,translate:ICONS.move,rotate:ICONS.rotate,scale:ICONS.scale}[tool],13));
+      const b = iconButton(`rail-btn tool-${tool}`, {select:ICONS.cursor,translate:ICONS.move,rotate:ICONS.rotate,scale:ICONS.scale}[tool], tool === 'select' ? 'Select (E / Tab)' : label);
+      if (tool === 'select') b.append(h('span', { class: 'kbd-tag', 'aria-hidden': 'true' }, 'E'));
       b.addEventListener('click', () => {
+        this.setMode('edit');
         this.ctx.viewport.setTransformTool(tool);
         this.refresh();
       });
@@ -188,10 +188,11 @@ export class PropertiesPanel {
       h('p',{class:'hint'},'Rotation and scale use the crosshair as their pivot.'));
 
     /* ---- UV ops ---- */
-    const uvSec = div('panel-sec', h('h4', null, 'UV operations'));
-    const uvRow = div('seg');
+    const uvSec = div('panel-sec uv-operations-panel', h('h4', null, 'UV operations'));
+    const uvRow = h('div', { class: 'control-action-grid uv-action-grid', role: 'group', 'aria-label': 'UV actions' });
     for (const [label, op] of [['Rotate UV', 'rotate'], ['Flip U', 'flipX'], ['Flip V', 'flipY']] as const) {
-      const b = button(`uv-${op}`, label);
+      const b = button(`uv-${op}${op === 'flipY' ? ' flip-vertical' : ''}`, label);
+      b.prepend(svgIcon(op === 'rotate' ? ICONS.rotate : ICONS.flip, 14));
       b.addEventListener('click', () => this.uvOp(op));
       uvRow.append(b);
     }
@@ -204,7 +205,7 @@ export class PropertiesPanel {
     });
     const uvGrid = div('prop-grid');
     uvGrid.append(h('label', null, 'U offset', uvOffX), h('label', null, 'V offset', uvOffY));
-    uvSec.append(uvRow, h('span', { style: 'display:block;height:6px' }), uvGrid, h('span', { style: 'display:block;height:6px' }), uvMove);
+    uvSec.append(uvRow, div('uv-offset-block', uvGrid, div('transform-action', uvMove)));
 
     /* ---- selection ops row ---- */
     const selOps = div('panel-sec', h('h4', null, 'Selection ops'));
@@ -227,7 +228,7 @@ export class PropertiesPanel {
     const construction=h('details',{class:'suite-menu suite-construction'},h('summary',null,'Construction settings'),div('suite-menu-popup',gridSec,lockCheck));
     context.prepend(modeSec,planeSec,construction);
     const compact=matchMedia('(max-width:560px)');const placePlane=()=>{if(compact.matches)construction.lastElementChild!.prepend(planeSeg);else planeSec.prepend(planeSeg);};compact.addEventListener('change',placePlane);placePlane();
-    segFace.classList.add('suite-transform-tools');document.getElementById('tool-rail')!.append(segFace);
+    document.getElementById('tool-rail')!.append(segFace);
     this.root.append(this.selInfo,this.selActions,selSec,selOps,uvSec);
     for(const hint of this.root.querySelectorAll('p.hint')){const details=h('details',{class:'suite-instructions'},h('summary',null,'Usage help'));hint.replaceWith(details);details.append(hint);}
 
@@ -338,7 +339,11 @@ export class PropertiesPanel {
     const tool = this.ctx.viewport.getTransformTool();
     for (const t of ['select', 'translate', 'rotate', 'scale']) {
       const b = document.querySelector(`#tool-rail .tool-${t}`) as HTMLButtonElement;
-      if (b) b.classList.toggle('active', tool === t);
+      if (b) {
+        const active = session.mode === 'edit' && tool === t;
+        b.classList.toggle('active', active);
+        b.setAttribute('aria-pressed', String(active));
+      }
     }
     // selection info
     const nT = session.selection.tileIds.length;

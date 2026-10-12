@@ -124,15 +124,22 @@ export class AtlasPanel {
     );
     this.brushPreviewCanvas = brushSec.querySelector('canvas') as HTMLCanvasElement;
 
-    const flipSec = div('panel-sec',
+    const flipX = button('seg-fx', 'Flip X', 'Mirror the brush horizontally');
+    const flipY = button('seg-fy flip-vertical', 'Flip Y', 'Mirror the brush vertically');
+    flipX.prepend(svgIcon(ICONS.flip, 14));
+    flipY.prepend(svgIcon(ICONS.flip, 14));
+    const flipSec = div('panel-sec brush-transform-panel',
       h('h4', null, 'Brush transform'),
-      div('seg',
-        ...([0, 1, 2, 3] as const).map((r) =>
-          button(`seg-rot${r}`, `${r * 90}°`, `Rotate brush ${r * 90}°`)),
+      h('span', { class: 'control-group-label' }, 'Rotation'),
+      h('div', { class: 'brush-rotation-choices', role: 'group', 'aria-label': 'Brush rotation' },
+        ...([0, 1, 2, 3] as const).map((r) => {
+          const b = button(`seg-rot${r}`, `${r * 90}°`, `Rotate brush ${r * 90}°`);
+          b.setAttribute('aria-label', `Rotate brush ${r * 90}°`);
+          return b;
+        }),
       ),
-      h('div', { class: 'seg', style: 'margin-top:6px' },
-        button('seg-fx', 'Flip X'), button('seg-fy', 'Flip Y'),
-      ),
+      h('span', { class: 'control-group-label' }, 'Mirror'),
+      h('div', { class: 'control-action-grid brush-flip-controls', role: 'group', 'aria-label': 'Brush mirroring' }, flipX, flipY),
       h('p', { class: 'hint' }, 'Choose a quarter-turn or flip for the current tile brush.'),
     );
     // wire brush transform buttons
@@ -213,6 +220,16 @@ export class AtlasPanel {
   refresh(): void {
     const project = this.ctx.store.project;
     const session = this.ctx.session;
+    this.root.querySelectorAll<HTMLButtonElement>('.seg-rot0,.seg-rot1,.seg-rot2,.seg-rot3').forEach((b, i) => {
+      const active = session.brush.rotation === i;
+      b.classList.toggle('active', active);
+      b.setAttribute('aria-pressed', String(active));
+    });
+    for (const [selector, active] of [['.seg-fx', session.brush.flipX], ['.seg-fy', session.brush.flipY]] as const) {
+      const b = this.root.querySelector<HTMLButtonElement>(selector)!;
+      b.classList.toggle('active', active);
+      b.setAttribute('aria-pressed', String(active));
+    }
     this.applyBtn.disabled=!this.ctx.canApplyToSelection();
     const wrap = this.canvas.parentElement;
     const panelHidden = !wrap || wrap.clientWidth < 4;
