@@ -1,0 +1,32 @@
+{
+  "browser": "156.0.8078.4",
+  "viewport": "1440x900",
+  "images": [
+    "platform-01-new.png",
+    "platform-02-atlas.png",
+    "platform-03-plane.png",
+    "platform-04-finished.png",
+    "wall-01-platform.png",
+    "wall-02-plane.png",
+    "wall-03-drawn.png",
+    "wall-04-group.png",
+    "export-01-selected.png",
+    "export-02-brush.png",
+    "export-03-applied.png",
+    "export-04-glb.png"
+  ],
+  "downloads": [
+    "stone-platform.pvp",
+    "platform-wall.pvp",
+    "finished-platform.pvp",
+    "finished-platform.glb"
+  ],
+  "errors": [],
+  "project": "Stone platform and wall",
+  "tiles": 15,
+  "checkpointsReopened": [
+    "stone-platform.pvp",
+    "platform-wall.pvp",
+    "finished-platform.pvp"
+  ]
+}

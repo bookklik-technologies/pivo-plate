@@ -58,6 +58,21 @@ npm run test:font
 
 The regression script starts its own Vite server on port 4176 and shuts it down afterward. It launches headless Chromium with software WebGL flags. Reports and captures are written to test-results. No external websites are contacted by the tests. The one-time browser download requires network access on your machine.
 
+## Documentation
+
+After `npm ci`, run these commands from the app's repository root:
+
+```sh
+npm run docs:dev      # start the VitePress documentation server
+npm run docs:build    # generate the static documentation site
+npm run docs:preview  # preview the built documentation site
+npm run docs:capture  # recreate tutorial screenshots and downloadable checkpoints
+```
+
+Open the local URL printed by VitePress. The documentation build is written to `docs/.vitepress/dist`; run `docs:build` before `docs:preview`. The application build remains in `dist/`.
+
+The [beginner tutorials](docs/tutorials/index.md) cover one project through three lessons, with real screenshots and editable native-project checkpoints. `docs:capture` starts a temporary local Vite server, uses a fresh Chromium session, writes assets to `docs/public/tutorials/`, and closes the browser/server afterward. It uses an installed Playwright Chromium browser (or installed Chrome); if neither is present, install Chromium with `npx playwright install chromium` first.
+
 ## First workflow
 
 1. The original sample room opens by default. File > New (demo tileset) starts an empty scene with an atlas; New (empty) has no atlas.
