@@ -4,7 +4,8 @@ import path from 'node:path';
 
 const root=process.cwd(),manifestPath=path.join(root,'suite-manifest.json');
 const manifest=JSON.parse(readFileSync(manifestPath,'utf8'));
-const hash=file=>createHash('sha256').update(readFileSync(file)).digest('hex');
+// Hash consistent LF text on both Windows and Linux checkouts.
+const hash=file=>createHash('sha256').update(readFileSync(file,'utf8').replace(/\r\n/g,'\n')).digest('hex');
 const canonical=path.resolve(root,'../pivo-suite');
 const names={'suite.ts':'suite.ts','suite.css':'suite.css','suite-recovery.ts':'recovery.ts','suite-pwa.ts':'pwa.ts','suite-worker.ts':'worker-client.ts'};
 const refresh=process.argv.includes('--refresh');

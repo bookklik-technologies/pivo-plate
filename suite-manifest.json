@@ -2,10 +2,10 @@
   "version": "1.3.0",
   "root": "src/ui",
   "files": {
-    "suite.ts": "ee0a227bbd525af19b8f6515f29ae13c91218f83c23acb30e26a54c04af24522",
-    "suite.css": "9651ce2b59bba4c0abf3304e69cb24a3e3f3947bb40abc4353c04793960e9ba1",
-    "suite-recovery.ts": "2e1a2beee9a140f35658f691a113fcc122aa388bf3a9e9d082bb2ca138f4916c",
-    "suite-pwa.ts": "dd4cb99556f804171701c97264c0108a547273f3d3a00c163e239895f3df64ce",
-    "suite-worker.ts": "2c641500bc51ed0b4ab69ce2feda3c4eeecd4798339cdacb76b7927c85cdbcf5"
+    "suite.ts": "b831746fe241754b99b518539863415777a1d82e80a218b455ac43d359909cf5",
+    "suite.css": "a4f6ae5488bea9b05b3f8949ec76b8def51b178e529cb24f5bf0dac3c246e8c7",
+    "suite-recovery.ts": "9a1fcb7126372ae05650b89af03ccd8c42cb72a3e04a4f6632dd6611e23131e6",
+    "suite-pwa.ts": "b3c7a4bee09c1e812ab5f4f806629cb37b1736563b443fe8ecde28ba5b9cf25d",
+    "suite-worker.ts": "811cba513d97273795325570426fb13ab98e1e15cc9cf42d9f52b46c1ace3616"
   }
 }
