@@ -56,3 +56,7 @@ The regression scripts launch headless Chromium with software WebGL flags and wr
 - Follow the [User guide](/guide) through the eight-step first workflow.
 - Read [File formats](/formats) for `.pvp`, GLB and OBJ details.
 - Drive the engine with the [Core & IO API](/api) (contract in [CONTRACTS.md](/CONTRACTS)).
+
+## Release validation and updates
+
+Production browser checks use `npm run test:release` against the built app at its deployment subpath. Unit tests are manually authorized. See [production readiness](production-readiness.md) for current evidence and limitations. Updates show a prompt and require recovery to be stored before reload. Download native project backups regularly; browser site data can be cleared by the browser or user.

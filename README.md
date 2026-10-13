@@ -31,3 +31,7 @@ See the [tutorials](https://bookklik-technologies.github.io/pivo-plate/docs/tuto
 ## License
 
 Released under the [MIT License](LICENSE). See [third-party notices](THIRD_PARTY_NOTICES.md) for dependency licenses.
+
+## Production readiness
+
+See [readiness findings and release procedure](docs/production-readiness.md). Unit tests are manual; pull-request checks cover builds, dependency exceptions and browser workflows.

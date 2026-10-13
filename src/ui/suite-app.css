@@ -61,12 +61,14 @@
 
 .obj-row .tb-icon-btn{width:32px;min-width:32px}
 #app-header{padding-inline:16px;gap:16px}
-#menubar .menu-root{font-size:12px;padding:5px 10px;color:var(--pivo-text)}
+#menubar .menu-root{font-size:12px;font-weight:400;padding:5px 10px;color:var(--pivo-text)}
+.menu-popup .menu-item{font-weight:400}
+body{letter-spacing:normal}
 #sidebar-right>.side-page{padding:0}
 #sidebar-right .panel-sec{padding:16px;margin-bottom:0}
 #sidebar-right .panel-sec>h4{font-size:12px;font-weight:650;letter-spacing:0;text-transform:none;color:var(--pivo-text);margin-bottom:12px}
 #side-tabs .side-tab{text-transform:none;letter-spacing:0;font-weight:400}
-.suite-export-overlay{background:#03080dbb;backdrop-filter:none}
+
 .modal-box.suite-export-dialog{padding:0;max-height:calc(100dvh - 32px);background:var(--pivo-surface)}
 @media(max-width:1180px){#app-header{padding-inline:12px;gap:8px}}
 @media(max-width:880px){#app-header{padding-inline:8px;gap:6px}#menubar .menu-root{padding-inline:7px}}

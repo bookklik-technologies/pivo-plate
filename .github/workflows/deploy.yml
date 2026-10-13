@@ -1,60 +1,70 @@
-name: Deploy app and docs to GitHub Pages
-
+name: Manually validate and release app and docs
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
-
 permissions:
   contents: read
-
 concurrency:
   group: pages
   cancel-in-progress: false
-
 jobs:
-  build:
+  validate-and-build:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: read
       pages: read
+    timeout-minutes: 30
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-node@v6
         with:
           node-version: 24
           cache: npm
-
-      - name: Configure GitHub Pages
-        uses: actions/configure-pages@v5
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build app
-        run: npm run build
-
-      - name: Build documentation
-        run: npm run docs:build
+      - run: npm ci --ignore-scripts
+      - run: npm run check:suite
+      - run: npm run check:dependencies
+      - name: Unit validation authorized by manual dispatch
+        run: npm test
+      - run: npm run build
+      - run: npm run docs:build
         env:
           DOCS_BASE: /${{ github.event.repository.name }}/docs/
-
-      - name: Combine app and documentation
+      - run: npm run build:standalone
+      - run: npx --no-install playwright install --with-deps chromium firefox webkit
+      - run: npm run test:release
+        env:
+          LIBGL_ALWAYS_SOFTWARE: '1'
+      - run: npm run test:workers
+        env:
+          LIBGL_ALWAYS_SOFTWARE: '1'
+      - run: npm run test:menus
+        env:
+          LIBGL_ALWAYS_SOFTWARE: '1'
+      - run: npm run test:standalone
+        env:
+          LIBGL_ALWAYS_SOFTWARE: '1'
+      - run: npm run capture:predecessor
+      - run: npm run test:upgrade
+        env:
+          LIBGL_ALWAYS_SOFTWARE: '1'
+      - name: Combine verified app and docs
         run: |
           mkdir -p dist/docs
           cp -a docs/.vitepress/dist/. dist/docs/
-
-      - name: Upload GitHub Pages artifact
-        uses: actions/upload-pages-artifact@v4
+          git rev-parse HEAD > dist/release-commit.txt
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
         with:
           path: dist
-
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: readiness-evidence
+          path: test-results/readiness
   deploy:
-    needs: build
+    needs: validate-and-build
     runs-on: ubuntu-latest
     permissions:
       pages: write
@@ -63,6 +73,5 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Deploy to GitHub Pages
+      - uses: actions/deploy-pages@v4
         id: deployment
-        uses: actions/deploy-pages@v4

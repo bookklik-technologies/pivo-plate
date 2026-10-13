@@ -1,12 +1,13 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
-  encodeProject, decodeProject, saveAutosave, loadAutosave, clearAutosave,
+  encodeProject, decodeProject,
   downloadBytes, downloadText,
 } from '../src/io/project.ts';
 import { ContainerError, PayloadError } from '../src/io/util.ts';
 import { validateProjectValue } from '../src/io/validate.ts';
 import { makeProject, makeTile, makeAtlas, makeObject, pngDataUrl, makePng } from './fixtures.ts';
 import { zipSync, unzipSync, strFromU8, strToU8 } from 'fflate';
+import { IDBFactory, IDBObjectStore } from 'fake-indexeddb';
 import type { Project } from '../src/core/types.ts';
 
 function jsonProject(p: Project): Record<string, unknown> {
@@ -14,113 +15,43 @@ function jsonProject(p: Project): Record<string, unknown> {
 }
 
 // ---------------------------------------------------------------------------
-// Minimal IndexedDB shim (no extra deps): supports the exact API surface
-// project.ts uses, plus fault injection for graceful-failure tests.
+// Transaction-backed emulator: independent legacy/v2 databases and real aborts.
+// Reset the IO module per test to model a fresh browser session.
 // ---------------------------------------------------------------------------
-type IdbGlobal = typeof globalThis & {
-  indexedDB?: IDBFactory | undefined;
-  __idbFail?: string | null;
-};
-const g = globalThis as IdbGlobal;
-const mem = new Map<string, unknown>();
+const g = globalThis;
+let saveAutosave: typeof import('../src/io/project.ts').saveAutosave;
+let loadAutosave: typeof import('../src/io/project.ts').loadAutosave;
+let clearAutosave: typeof import('../src/io/project.ts').clearAutosave;
+let listRecoveryCopies: typeof import('../src/io/project.ts').listRecoveryCopies;
+let inspectAutosave: typeof import('../src/io/project.ts').inspectAutosave;
+let resolveRecovery: typeof import('../src/io/project.ts').resolveRecovery;
 
-function idbEvent(type: string): Event {
-  return new Event(type);
+async function editStorage(database: string, store: string, edit: (store: IDBObjectStore) => void): Promise<void> {
+  const db = await new Promise<IDBDatabase>((resolve, reject) => {
+    const request = indexedDB.open(database, 1);
+    request.onupgradeneeded = () => request.result.createObjectStore(store, store === 'copies' ? {keyPath:'id'} : undefined);
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const tx = db.transaction(store, 'readwrite');
+      tx.oncomplete = () => resolve();
+      tx.onabort = tx.onerror = () => reject(tx.error);
+      edit(tx.objectStore(store));
+    });
+  } finally { db.close(); }
 }
 
-function installShim(): void {
-  g.__idbFail = null;
-  g.indexedDB = {
-    open(_name: string, _version: number) {
-      const req: {
-        result: unknown; error: unknown;
-        onupgradeneeded: (() => void) | null;
-        onsuccess: (() => void) | null;
-        onerror: (() => void) | null;
-        onblocked: (() => void) | null;
-      } = {
-        result: null as unknown, error: null as unknown,
-        onupgradeneeded: null as (() => void) | null,
-        onsuccess: null as (() => void) | null,
-        onerror: null as (() => void) | null,
-        onblocked: null as (() => void) | null,
-      };
-      queueMicrotask(() => {
-        if (g.__idbFail === 'unavailable') {
-          req.error = new Error('IndexedDB unavailable');
-          if (typeof req.onerror === 'function') {
-            (req.onerror as unknown as (ev: Event) => void)(idbEvent('error'));
-          }
-          return;
-        }
-        req.result = {
-          objectStoreNames: { contains: (_s: string) => true },
-          transaction(_store: string, _mode: 'readonly' | 'readwrite') {
-            const failNow = g.__idbFail;
-            const tx = {
-              error: null as unknown,
-              oncomplete: null as (() => void) | null,
-              onerror: null as (() => void) | null,
-              onabort: null as (() => void) | null,
-              objectStore() {
-                return {
-                  put(value: unknown, key: IDBValidKey) {
-                    if (!failNow) mem.set(String(key), value);
-                    return {} as IDBRequest<IDBValidKey>;
-                  },
-                  get(key: IDBValidKey) {
-                    const gr = {
-                      result: mem.get(String(key)),
-                      onsuccess: null as (() => void) | null,
-                      onerror: null as (() => void) | null,
-                    };
-                    queueMicrotask(() => {
-                      if (failNow === 'read') {
-                        if (typeof gr.onerror === 'function') {
-                          (gr.onerror as unknown as (ev: Event) => void)(idbEvent('error'));
-                        }
-                      } else if (typeof gr.onsuccess === 'function') {
-                        (gr.onsuccess as unknown as (ev: Event) => void)(idbEvent('success'));
-                      }
-                    });
-                    return gr as unknown as IDBRequest<unknown>;
-                  },
-                  delete(key: IDBValidKey) {
-                    if (!failNow) mem.delete(String(key));
-                    return {} as IDBRequest<undefined>;
-                  },
-                };
-              },
-            };
-            queueMicrotask(() => {
-              if (failNow === 'write' || failNow === 'clear' || failNow === 'open') {
-                tx.error = new Error(`injected ${failNow} failure`);
-                if (typeof tx.onabort === 'function') {
-                  (tx.onabort as unknown as (ev: Event) => void)(idbEvent('abort'));
-                }
-              } else if (typeof tx.oncomplete === 'function') {
-                (tx.oncomplete as unknown as (ev: Event) => void)(idbEvent('complete'));
-              }
-            });
-            return tx as unknown as IDBTransaction;
-          },
-          close() { /* no-op */ },
-        } as unknown as IDBDatabase;
-        if (typeof req.onsuccess === 'function') {
-          (req.onsuccess as unknown as (ev: Event) => void)(idbEvent('success'));
-        }
-      });
-      return req as unknown as IDBOpenDBRequest;
-    },
-  } as unknown as IDBFactory;
-}
-
-beforeEach(() => {
-  mem.clear();
-  installShim();
+beforeEach(async () => {
+  vi.restoreAllMocks();
+  g.indexedDB = new IDBFactory();
+  vi.resetModules();
+  ({saveAutosave, loadAutosave, clearAutosave, listRecoveryCopies, inspectAutosave, resolveRecovery} = await import('../src/io/project.ts'));
 });
 afterEach(() => {
-  (g as { indexedDB?: unknown }).indexedDB = undefined;
+  vi.restoreAllMocks();
+  Reflect.deleteProperty(g, 'indexedDB');
 });
 
 // ---------------------------------------------------------------------------
@@ -332,24 +263,75 @@ describe('autosave (IndexedDB)', () => {
 
   it('corrupt autosave content resolves to null instead of crashing', async () => {
     await saveAutosave(makeProject());
-    mem.set('current', 'this is not json at all');
+    const [entry] = await listRecoveryCopies();
+    await editStorage('pivo-plate-recovery-v2', 'copies', store => store.put({...entry,data:'this is not json at all'}));
     expect(await loadAutosave()).toBeNull();
   });
 
   it('invalid project shape in autosave resolves to null', async () => {
-    mem.set('current', JSON.stringify({ hello: 'world' }));
+    await editStorage('pivo-plate', 'autosave', store => store.put(JSON.stringify({hello:'world'}), 'current'));
     expect(await loadAutosave()).toBeNull();
   });
 
   it('surfaces readable errors when IndexedDB is unavailable', async () => {
-    g.__idbFail = 'unavailable';
+    Reflect.deleteProperty(g, 'indexedDB');
     await expect(saveAutosave(makeProject())).rejects.toThrow(/IndexedDB/i);
     await expect(loadAutosave()).rejects.toThrow(/IndexedDB/i);
   });
 
   it('write failures surface as readable errors and do not leave partial state', async () => {
-    g.__idbFail = 'write';
-    await expect(saveAutosave(makeProject())).rejects.toThrow(/failed|aborted/i);
+    await saveAutosave(makeProject({name:'Original'}));
+    vi.spyOn(IDBObjectStore.prototype, 'put').mockImplementationOnce(() => { throw new DOMException('quota exceeded', 'QuotaExceededError'); });
+    await expect(saveAutosave(makeProject({name:'Rejected'}))).rejects.toThrow(/write failed/i);
+    expect((await loadAutosave())!.name).toBe('Original');
+  });
+
+  it('retries startup migration after storage becomes available', async () => {
+    Reflect.deleteProperty(g, 'indexedDB');
+    await expect(saveAutosave(makeProject())).rejects.toThrow(/IndexedDB/i);
+    g.indexedDB = new IDBFactory();
+    await saveAutosave(makeProject({name:'Recovered storage'}));
+    expect((await loadAutosave())!.name).toBe('Recovered storage');
+  });
+
+  it('an aborted write preserves the previous durable revision and can be retried', async () => {
+    await saveAutosave(makeProject({name:'Durable'}));
+    const originalPut = IDBObjectStore.prototype.put;
+    vi.spyOn(IDBObjectStore.prototype, 'put').mockImplementationOnce(function(this: IDBObjectStore, value, key) {
+      const request = originalPut.call(this, value, key);
+      this.transaction.abort();
+      return request;
+    });
+    await expect(saveAutosave(makeProject({name:'Aborted'}))).rejects.toThrow(/failed/i);
+    expect((await loadAutosave())!.name).toBe('Durable');
+    await saveAutosave(makeProject({name:'Retry'}));
+    expect((await loadAutosave())!.name).toBe('Retry');
+  });
+
+  it('retains invalid legacy bytes until explicit discard', async () => {
+    await editStorage('pivo-plate', 'autosave', store => store.put('invalid legacy bytes', 'current'));
+    const record = await inspectAutosave();
+    expect(record.status).toBe('invalid');
+    expect(record.raw).toBe('invalid legacy bytes');
+    expect(await listRecoveryCopies()).toHaveLength(1);
+    await resolveRecovery(record.raw!, true);
+    expect(await listRecoveryCopies()).toHaveLength(0);
+    const reread = await indexedDB.databases();
+    expect(reread.map(db=>db.name)).toContain('pivo-plate');
+    // A new session must not remigrate a discarded original.
+    vi.resetModules();
+    const nextSession = await import('../src/io/project.ts');
+    expect((await nextSession.inspectAutosave()).status).toBe('empty');
+  });
+
+  it('clearing one session preserves another session recovery', async () => {
+    await saveAutosave(makeProject({name:'First session'}));
+    vi.resetModules();
+    const second = await import('../src/io/project.ts');
+    await second.saveAutosave(makeProject({name:'Second session'}));
+    expect(await listRecoveryCopies()).toHaveLength(2);
+    await second.clearAutosave();
+    expect((await listRecoveryCopies()).map(entry=>entry.name)).toEqual(['First session']);
   });
 
   it('autosave stores a validated deep clone (mutating the source afterwards is safe)', async () => {

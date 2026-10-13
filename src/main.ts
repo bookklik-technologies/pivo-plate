@@ -1,3 +1,8 @@
+import {archiveAsync} from './io/archive';
+import {inspectAlpha} from './io/alpha';
+import {installUpdatePrompt} from './ui/suite-pwa';
+import {listRecoveryCopies,selectRecovery,flushRecoveryStorage} from './io/project';
+declare const __STANDALONE__:boolean;
 /**
  * PiVo Plate — application entry.
  * Builds the shell, wires the viewport + panels, owns file I/O, autosave,
@@ -8,7 +13,7 @@ import './ui/styles.css';
 import './ui/suite.css';
 import './ui/suite-app.css';
 import logo from '../logo.svg?url';
-import {resize,tabKeys,installDisclosureMenus,installDockToggle,positionPopup} from './ui/suite';
+import {resize,tabKeys,installDisclosureMenus,installDockToggle,positionPopup,menuShortcut,installAppMenuNavigation,shortcutTable} from './ui/suite';
 import * as THREE from 'three';
 import type { TransformControls } from 'three/addons/controls/TransformControls.js';
 import type { Atlas, EditorSession, Mode, Plane, Project, Selection } from './core/types';
@@ -32,7 +37,7 @@ import { buildSampleScene, makeDemoAtlas } from './ui/demoAssets';
 import { isModalOpen, mountModal, svgIcon, type Glyph, button, clearChildren, confirmModal, div, h, iconButton, ICONS, toast, toastError } from './ui/dom';
 
 import { applyRootTheme, readTheme, persistTheme, type Theme, type PreferenceStorage } from './ui/theme';
-import { menuGlyph } from './ui/icons';import { showAboutModal } from './ui/about';
+import { showAboutModal } from './ui/about';
 
 /* ------------------------------------------------------------------ */
 /* shell                                                              */
@@ -52,7 +57,7 @@ const docName = h('div', { id: 'doc-name' },
   h('span', { class: 'dirty-dot clean', id: 'dirty-dot' }),
   h('span', { class: 'name', id: 'doc-name-text' }, 'Untitled'),
 );
-const menubar = h('nav', { id: 'menubar' });
+const menubar = h('nav', { id: 'menubar', 'aria-label': 'Application menus' });
 let rendererInfoEl: HTMLElement;
 header.append(
   h('h1',{class:'logo-mark suite-brand'},h('img',{src:logo,alt:''}),h('span',null,'PiVo Plate')),
@@ -136,7 +141,7 @@ statusBar.append(
 const toasts = div('');
 toasts.id = 'toasts';
 
-const docsLink=h('a',{href:'./docs/',target:'_blank',rel:'noopener'},'Docs');menubar.append(docsLink);
+
 header.classList.add('suite-header');menubar.classList.add('suite-menus');header.querySelector('.header-actions')!.classList.add('suite-header-actions');
 const saveState=h('span',{class:'suite-save-state',role:'status','aria-live':'polite'});
 const documentStrip=div('suite-document-strip',docName,saveState,sideToggle);
@@ -273,6 +278,7 @@ async function initApp(): Promise<void> {
   wireStatusHelp();
   wireKeyboard();
   wireDragDrop();
+  fileInput();
   wireAutosaveLifecycle();
 
   store.subscribe(() => scheduleAutosave());
@@ -288,7 +294,7 @@ async function initApp(): Promise<void> {
     toast('Browser recovery is unavailable in this context. Use File > Save for downloadable backups.', 'info');
   } finally {
     recoveryCheckComplete = true;
-    if(autosaveDirty && !recoveryPending) scheduleAutosave();
+    if(autosaveDirty) scheduleAutosave();
   }
 
   setTheme(currentTheme);
@@ -366,17 +372,15 @@ function buildMenus(): void {
     {
       label: 'File',
       items: [
-        { label: 'New (demo tileset)', sc: '', action: () => newDocument(true) },
-        { label: 'New (empty)', action: () => newDocument(false) },
-        { label: 'Sample Room…', action: () => loadSample() },
-        { sep: true, label: '' },
-        { label: 'Open .pvp…', sc: 'Ctrl+O', action: () => void openDocument() },
-        { label: 'Save project', sc: 'Ctrl/Cmd+S', action: () => void saveDocument() },
-        { label: 'Recovery…', action: () => void reviewRecovery() },
-        { sep: true, label: '' },
-        { label: 'Export…', action: showExportDialog },
-        { sep: true, label: '' },
-        { label: 'Import PNG atlas…', action: () => (atlasPage.querySelector('input[type=file]') as HTMLInputElement)?.click() },
+        {label:'New project…',action:()=>newDocument(false)},
+        {label:'Open project…',action:()=>void openDocument()},
+        {label:'Save project',action:()=>void saveDocument()},
+        {label:'Export…',action:showExportDialog},
+        {label:'Recovery…',action:()=>void reviewRecovery()},
+        {sep:true,label:''},
+        {label:'New project with demo tileset',action:()=>newDocument(true)},
+        {label:'Sample Room…',action:()=>loadSample()},
+        {label:'Import PNG atlas…',action:()=>(atlasPage.querySelector('input[type=file]') as HTMLInputElement)?.click()},
       ],
     },
     {
@@ -397,12 +401,12 @@ function buildMenus(): void {
     {
       label: 'View',
       items: [
-        {label:'Use system appearance',action:useSystemTheme},
         {label:'Toggle panels',action:()=>sideToggle.click()},
-        {label:'Technical diagnostics',action:()=>app.classList.toggle('suite-diagnostics')},
-        {label:'Light theme',action:()=>setTheme('light'),enabled:()=>currentTheme!=='light'},
-        {label:'Dark theme',action:()=>setTheme('dark'),enabled:()=>currentTheme!=='dark'},
+        {label:'System appearance',action:useSystemTheme},
+        {label:'Light appearance',action:()=>setTheme('light'),enabled:()=>currentTheme!=='light'},
+        {label:'Dark appearance',action:()=>setTheme('dark'),enabled:()=>currentTheme!=='dark'},
         {sep:true,label:''},
+        {label:'Technical diagnostics',action:()=>app.classList.toggle('suite-diagnostics')},
         { label: 'Perspective / Ortho camera', sc: 'P', action: () => { viewport.setCameraKind(viewport.getCameraKind() === 'persp' ? 'ortho' : 'persp'); refreshAll(); } },
         { label: 'Frame selection', sc: 'F', action: () => viewport.frameSelection() },
         { label: 'Frame scene', sc: 'Home', action: () => viewport.frameAll() },
@@ -416,7 +420,7 @@ function buildMenus(): void {
     {
       label: 'Help',
       items: [
-        { label: 'Shortcuts & usage', sc: '?', action: () => showHelp() },
+        { label: 'Keyboard shortcuts…', sc: '?', action: () => showHelp() },
         { label: 'About PiVo Plate', action: () => showAbout() },
       ],
     },
@@ -424,12 +428,14 @@ function buildMenus(): void {
   for (const def of defs) {
     const root = button('menu-root', def.label);
     root.dataset.input = '';root.setAttribute('aria-haspopup','true');root.setAttribute('aria-expanded','false');
+    root.addEventListener('keydown',e=>{if(['ArrowDown','ArrowUp','Home','End'].includes(e.key)){e.preventDefault();e.stopPropagation();if(!root.classList.contains('open'))openMenu(def,root);const items=[...activePopup!.querySelectorAll<HTMLButtonElement>('button:not(:disabled)')];(e.key==='ArrowUp'||e.key==='End'?items.at(-1):items[0])?.focus();}});
     root.addEventListener('click', (e) => {
       e.stopPropagation();
       openMenu(def, root);
     });
     menubar.append(root);
   }
+  installAppMenuNavigation(menubar);
   window.addEventListener('pointerdown', () => closeMenus());
 }
 
@@ -438,17 +444,17 @@ function openMenu(def: MenuDef, root: HTMLElement): void {
   closeMenus();
   if (wasOpen) return;
   root.classList.add('open');root.setAttribute('aria-expanded','true');
-  const popup = div('menu-popup');
+  const popup = div('menu-popup suite-app-menu-popup');
   popup.addEventListener('pointerdown', e => e.stopPropagation());
   for (const item of def.items) {
-    if (item.sep) { popup.append(div('menu-sep')); continue; }
+    if (item.sep) { popup.append(h('hr',{class:'suite-menu-separator'})); continue; }
     const enabled = item.enabled ? item.enabled() : true;
     const b = button('menu-item', '');
-    b.append(svgIcon(menuGlyph(item.label),15),h('span',{class:'menu-label'},item.label));
+    b.setAttribute('aria-label',item.label);
+    b.append(h('span',{class:'suite-menu-label'},item.label),h('span',{class:'suite-menu-hint','aria-hidden':'true'},menuShortcut(item.label,item.sc)));
     b.disabled = !enabled;
-    if (item.sc) b.append(h('span', { class: 'sc' }, item.sc));
     b.addEventListener('click', () => {
-      closeMenus();
+      closeMenus();root.focus();
       item.action?.();
     });
     popup.append(b);
@@ -760,9 +766,9 @@ function wireKeyboard(): void {
     if (mod && e.key.toLowerCase() === 'c') { e.preventDefault(); opsCopy(); return; }
     if (mod && e.key.toLowerCase() === 'v') { e.preventDefault(); opsPaste(); return; }
     if (mod && e.key.toLowerCase() === 'a') { e.preventDefault(); session.selection = { tileIds: store.project.tiles.map((t) => t.id), vertices: [] }; refreshAll(); return; }
-    if (e.key === 'Tab' && !(e.target instanceof HTMLElement && e.target.closest('button,summary,[role=tab],[role=treeitem]'))) { e.preventDefault(); propsPanel.setMode(session.mode === 'draw' ? 'edit' : 'draw'); return; }
+    if (e.key === 'Tab' && !(e.target instanceof HTMLElement && e.target.closest('button,a[href],summary,[role=tab],[role=treeitem]'))) { e.preventDefault(); propsPanel.setMode(session.mode === 'draw' ? 'edit' : 'draw'); return; }
     if (e.key === 'Escape') { viewport.cancelStroke(); return; }
-    if(e.target instanceof HTMLElement && e.target.closest('button,summary,[role=tab],[role=treeitem]'))return;
+    if(e.target instanceof HTMLElement && e.target.closest('button,a[href],summary,[role=tab],[role=treeitem]'))return;
     switch (e.key.toLowerCase()) {
       case 'd': viewport.setEraseTool(false);propsPanel.setMode('draw');return;
       case 'b': session.mode='draw';viewport.setEraseTool(true);refreshAll();return;
@@ -858,7 +864,7 @@ async function readProjectFile(f: File): Promise<void> {
   try {
     if(f.size>ARCHIVE_LIMITS.maxCompressed)throw new Error('Project file exceeds compressed input budget');
     const buf = new Uint8Array(await f.arrayBuffer());
-    const p = await decodeProject(buf); // throws readable errors
+    const p = await archiveAsync<Project>('open',buf,'Opening project'); // throws readable errors
     for (const atlas of p.atlases) {
       const image = await decodeImage(atlas.dataUrl);
       if (image.naturalWidth !== atlas.width || image.naturalHeight !== atlas.height) throw new Error(`Texture dimensions do not match metadata for ${atlas.name}`);
@@ -882,14 +888,14 @@ async function readProjectFile(f: File): Promise<void> {
 async function saveDocument(): Promise<void> {
   try {
     const snapshot = validateProject(store.project);
-    const bytes = await encodeProject(snapshot);
+    const bytes = await archiveAsync<Uint8Array>('save',snapshot,'Saving project');
     downloadBytes(bytes, currentFileName, 'application/octet-stream');
     savedMarker = JSON.stringify(snapshot);cleanDocumentState='Project downloaded';
-    if (JSON.stringify(store.project) === savedMarker) store.markSaved();
-    if(recoveryAvailable && !recoveryPending) queueRecoveryWrite(snapshot);
+    store.markSaved(snapshot);
+    if(recoveryAvailable) queueRecoveryWrite(store.project);
     refreshAll();
-    setStatusMsg(`Saved ${currentFileName}`);
-    toast(`Saved ${currentFileName}`, 'success');
+    setStatusMsg(`Project download issued: ${currentFileName}`);
+    toast(`Project download issued: ${currentFileName}`, 'success');
   } catch (err) {
     toastError(err, 'Save');
   }
@@ -906,12 +912,16 @@ function showExportDialog():void {
 }
 async function reviewRecovery():Promise<void> {
  if(recoveryPending){recoverBanner.scrollIntoView();recoverBanner.querySelector<HTMLButtonElement>('button')?.focus();return;}
- try{await recoveryWriteQueue;const record=await inspectAutosave();if(record.status==='empty'){toast('No browser recovery copy is stored. Save project downloads an editable .pvp backup.','info');return;}showRecoverBanner(record);refreshStatus();recoverBanner.querySelector<HTMLButtonElement>('button')?.focus();}catch(err){recoveryAvailable=false;refreshStatus();toastError(err,'Recovery');}
+ try{await recoveryWriteQueue;const record=await inspectAutosave(true);recoveryAvailable=true;if(autosaveDirty)scheduleAutosave();if(record.status==='empty'){toast('No browser recovery copy is stored. Save project downloads an editable .pvp backup.','info');return;}showRecoverBanner(record);refreshStatus();recoverBanner.querySelector<HTMLButtonElement>('button')?.focus();}catch(err){recoveryAvailable=false;refreshStatus();toastError(err,'Recovery');}
 }
 
 async function exportModel(kind: 'glb' | 'obj'): Promise<void> {
   try {
-    const bytes = kind === 'glb' ? await exportGLB(store.project) : await exportOBJ(store.project);
+    const snapshot=validateProject(store.project);
+    // WebKit does not expose every image API in workers. Inspect bounded pixels
+    // here, then keep geometry generation and compression off the main thread.
+    const alphaModes=await inspectAlpha(snapshot);
+    const bytes=await archiveAsync<Uint8Array>(kind,snapshot,'Exporting '+kind.toUpperCase(),alphaModes);
     const base = currentFileName.replace(/\.pvp$/, '');
     downloadBytes(bytes, `${base}.${kind === 'glb' ? 'glb' : 'zip'}`, 'application/octet-stream');
     toast(`Exported ${base}.${kind === 'glb' ? 'glb' : 'zip'}`, 'success');
@@ -957,23 +967,23 @@ function cancelAutosaveTimer(): void {
 }
 
 function queueRecoveryWrite(snapshot:Project): void {
-  if(!recoveryAvailable || !recoveryCheckComplete || recoveryPending) return;
+  if(!recoveryAvailable || !recoveryCheckComplete) return;
   // Serialize writes so a slower old request cannot overwrite a newer snapshot.
   const safe=validateProject(snapshot);
   recoveryWriteQueue=recoveryWriteQueue.catch(()=>{}).then(async()=>{
-    if(!recoveryPending) {await saveAutosave(safe);recoverySnapshot=JSON.stringify(safe);refreshStatus();}
+    await saveAutosave(safe);recoverySnapshot=JSON.stringify(safe);refreshStatus();
   }).catch(err=>{recoveryAvailable=false;refreshStatus();toastError(err,'Autosave');});
 }
 
 function scheduleAutosave(): void {
-  if(store.revision===lastAutosaveRevision) return;
+  if(store.revision===lastAutosaveRevision&&!autosaveDirty) return;
   lastAutosaveRevision=store.revision;
   autosaveDirty=true;
   cancelAutosaveTimer();
-  if(!recoveryAvailable || !recoveryCheckComplete || recoveryPending) return;
+  if(!recoveryAvailable || !recoveryCheckComplete) return;
   autosaveTimer=window.setTimeout(()=>{
     autosaveTimer=null;
-    if(!autosaveDirty || recoveryPending) return;
+    if(!autosaveDirty) return;
     autosaveDirty=false;
     queueRecoveryWrite(store.project);
   },AUTOSAVE_DEBOUNCE_MS);
@@ -987,12 +997,15 @@ function showRecoverBanner(record:Awaited<ReturnType<typeof inspectAutosave>>): 
   recoverBanner.classList.add('show');
   const buttons=recoverBanner.querySelectorAll('button');
   const restore=buttons[0],discard=buttons[1];
+  const selection=h('select',{'aria-label':'Recovery copy'}) as HTMLSelectElement;
+  void listRecoveryCopies().then(copies=>{copies.forEach((entry,n)=>{const option=new Option(entry.name+' - '+new Date(entry.at).toLocaleString(),String(n));option.selected=entry.id===record.entry.id;selection.append(option);});selection.onchange=()=>{recoveryPending=false;backup.remove();selection.remove();showRecoverBanner(selectRecovery(copies[Number(selection.value)]));};}).catch(err=>toastError(err,'Recovery list'));
+  recoverBanner.append(selection);
   const backup=button('btn','Download recovery backup');
   recoverBanner.append(backup);
   const label=recoverBanner.querySelector('.inline-icon')!;
   label.replaceChildren(svgIcon(ICONS.warning), document.createTextNode(record.status==='invalid'
     ? 'Recovery snapshot cannot be opened. Download a backup before discarding.'
-    : 'Autosaved session found. Resolve recovery before autosave resumes.'));
+    : 'A recovery copy is waiting. Current edits are saved in a separate session copy.'));
   restore.disabled=record.status!=='valid';
   backup.onclick=()=>{
     const raw=record.raw??'';
@@ -1003,7 +1016,8 @@ function showRecoverBanner(record:Awaited<ReturnType<typeof inspectAutosave>>): 
   const resolved=():void=>{
     recoveryPending=false;refreshStatus();
     recoverBanner.classList.remove('show');
-    backup.remove();
+    backup.remove();selection.remove();
+    void inspectAutosave().then(next=>{if(next.status!=='empty')showRecoverBanner(next);}).catch(err=>toastError(err,'Recovery'));
     if(store.dirty || JSON.stringify(store.project)!==savedMarker) {
       lastAutosaveRevision=-1;
       scheduleAutosave();
@@ -1054,6 +1068,15 @@ function showRecoverBanner(record:Awaited<ReturnType<typeof inspectAutosave>>): 
 }
 
 function wireAutosaveLifecycle(): void {
+  const flush=async()=>{
+    cancelAutosaveTimer();
+    if(!recoveryAvailable||!recoveryCheckComplete)throw new Error('Resolve recovery or download a backup before updating');
+    queueRecoveryWrite(store.project);await recoveryWriteQueue;
+    if(!recoveryAvailable)throw new Error('Recovery could not be stored');await flushRecoveryStorage();
+  };
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)void flush().catch(()=>{});});
+  window.addEventListener('pagehide',()=>{void flush().catch(()=>{});});
+  if(!__STANDALONE__)installUpdatePrompt({ready:()=>!isModalOpen()&&!viewport.isBusy&&Number(document.documentElement.dataset.archiveBusy??0)===0&&!recoveryPending,flush,notify:message=>toast(message,'info')});
   window.addEventListener('beforeunload', (e) => {
     if (JSON.stringify(store.project) !== savedMarker || store.dirty) {
       e.preventDefault();
@@ -1077,55 +1100,18 @@ function showFirstRunHelp(): void {
 }
 
 function showHelp(): void {
-  const body = h('div', { class: 'modal-body' });
-  body.innerHTML = `
-  <div class="help-sec">Viewport</div>
-  <table class="help-table">
-    <tr><td>MMB drag</td><td>Orbit (also rotate camera around target)</td></tr>
-    <tr><td>RMB drag</td><td>Pan</td></tr>
-    <tr><td>Wheel</td><td>Zoom</td></tr>
-    <tr><td><kbd>P</kbd></td><td>Perspective ↔ Orthographic camera</td></tr>
-    <tr><td><kbd>F</kbd> / <kbd>Home</kbd></td><td>Frame selection / whole scene</td></tr>
-    <tr><td><kbd>X</kbd> <kbd>Z</kbd> <kbd>C</kbd></td><td>Construction plane XY / XZ / YZ</td></tr>
-    <tr><td><kbd>L</kbd></td><td>Lock plane (stops automatic camera plane)</td></tr>
-  </table>
-  <div class="help-sec">Draw mode</div>
-  <table class="help-table">
-    <tr><td>LMB drag</td><td>Stamp tiles along the stroke on the construction plane (one transaction)</td></tr>
-    <tr><td>RMB click</td><td>Erase one face; RMB drag still pans</td></tr>
-    <tr><td><kbd>B</kbd> + LMB drag / Shift+RMB drag</td><td>Erase stroke; release commits one undo step, Esc cancels</td></tr>
-    <tr><td><kbd>D</kbd></td><td>Return to tile drawing</td></tr>
-    <tr><td>Crosshair chip</td><td>Click to step the plane depth; grid snaps to it</td></tr>
-  </table>
-  <div class="help-sec">Edit mode</div>
-  <table class="help-table">
-    <tr><td>LMB click</td><td>Select tile (face mode) or corner (vertex mode)</td></tr>
-    <tr><td>Shift+click / drag box</td><td>Additive / box selection</td></tr>
-    <tr><td>Gizmo</td><td>Move / rotate / scale (commits around the crosshair pivot)</td></tr>
-    <tr><td><kbd>Del</kbd></td><td>Delete selection</td></tr>
-    <tr><td><kbd>Ctrl+D</kbd> / <kbd>Ctrl+C</kbd> / <kbd>Ctrl+V</kbd></td><td>Duplicate / copy / paste at crosshair</td></tr>
-  </table>
-  <div class="help-sec">Document</div>
-  <table class="help-table">
-    <tr><td><kbd>Ctrl+S</kbd></td><td>Download .pvp project (also keeps browser recovery)</td></tr>
-    <tr><td><kbd>Ctrl+O</kbd></td><td>Open a .pvp file</td></tr>
-    <tr><td><kbd>Ctrl/Cmd+Z</kbd> / <kbd>Ctrl/Cmd+Shift+Z</kbd> (Ctrl/Cmd+Y also works)</td><td>Undo / redo</td></tr>
-    <tr><td><kbd>Tab</kbd></td><td>Toggle draw / edit mode</td></tr>
-  </table>
-  <p class="hint"><b>Atlas:</b> pick a cell or drag a rectangular region; real pixel region drives the brush UVs. Import your own PNG from the Atlas tab or drop it on the viewport.</p>
-  <p class="hint"><b>Everything runs locally.</b> Documents are saved in your browser (IndexedDB); downloads go straight to disk. No network calls.</p>`;
-  const overlay = div('modal-overlay');
-  const box = div('modal-box');
-  const actions = div('modal-actions');
-  const gotIt = button('btn btn-primary', 'Got it');
-  let closeHelp: () => void;
-  actions.append(gotIt);
-  box.append(h('h3', { class: 'modal-title' }, 'PiVo Plate — shortcuts & usage'));
-  box.append(body);
-  box.append(actions);
-  overlay.append(box);
-  closeHelp = mountModal(overlay,box,gotIt);
-  gotIt.addEventListener('click',()=>closeHelp());
+ const body=div('suite-shortcuts-body');
+ const section=(title:string,rows:Array<[string,string]>)=>`<h3 class="suite-shortcuts-section">${title}</h3>${shortcutTable(rows)}`;
+ body.innerHTML=section('Document',[
+  ['Mod+S','Save project (.pvp)'],['Mod+O','Open project'],['Mod+Z','Undo'],['Mod+Shift+Z / Mod+Y','Redo'],['Escape','Cancel gesture / close dialog'],
+ ])+section('Editor',[
+  ['Tab','Toggle Draw / Edit mode'],['D','Return to tile drawing'],['Left mouse drag (Draw)','Stamp tiles along a stroke on the construction plane'],['Right mouse click (Draw)','Erase one face'],['B + Left mouse drag / Shift+Right mouse drag','Erase stroke; release commits one undo step'],['Left mouse click (Edit)','Select tile (face mode) or corner (vertex mode)'],['Shift+click / drag box','Additive / box selection'],['Delete','Delete selection'],['Mod+D','Duplicate selection'],['Mod+C','Copy selection'],['Mod+V','Paste at crosshair'],
+ ])+section('Viewport',[
+  ['Middle mouse drag','Orbit camera around target'],['Right mouse drag','Pan viewport'],['Wheel','Zoom viewport'],['P','Toggle perspective / orthographic camera'],['F / Home','Frame selection / whole scene'],['X / Z / C','Construction plane XY / XZ / YZ'],['L','Lock construction plane'],
+ ])+`<p class="suite-shortcuts-note">Shortcuts are inactive while typing or inside dialogs. Use the gizmo to move, rotate or scale the selection. Click the crosshair chip to step plane depth.</p>`;
+ const overlay=div('modal-overlay'),box=div('modal-box suite-shortcuts-dialog'),header=div('suite-shortcuts-header'),actions=div('suite-shortcuts-actions'),close=button('btn btn-primary suite-shortcuts-close','Close');
+ header.append(h('h3',{class:'suite-shortcuts-title'},'Keyboard shortcuts'));actions.append(close);box.append(header,body,actions);overlay.append(box);
+ const closeHelp=mountModal(overlay,box,close);close.addEventListener('click',closeHelp);
 }
 
 function showAbout(): void {

@@ -6,3 +6,7 @@ test-results/
 playwright-report/
 *.log
 browser-initial.*
+
+dist-standalone/
+playwright-report/
+test-results/

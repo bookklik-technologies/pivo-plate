@@ -1,0 +1,43 @@
+name: Production readiness
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  browser-and-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run check:suite
+      - run: npm run check:dependencies
+      - run: npm run build
+      - run: npm run docs:build
+        env:
+          DOCS_BASE: /${{ github.event.repository.name }}/docs/
+      - run: npm run build:standalone
+      - run: npx --no-install playwright install --with-deps chromium firefox webkit
+      - run: npm run test:release
+        env:
+          LIBGL_ALWAYS_SOFTWARE: '1'
+      - run: npm run test:workers
+        env:
+          LIBGL_ALWAYS_SOFTWARE: '1'
+      - run: npm run test:menus
+        env:
+          LIBGL_ALWAYS_SOFTWARE: '1'
+      - run: npm run test:standalone
+        env:
+          LIBGL_ALWAYS_SOFTWARE: '1'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: readiness-evidence
+          path: test-results/readiness

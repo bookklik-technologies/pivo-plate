@@ -135,8 +135,10 @@ export class Viewport {
     el.addEventListener('webglcontextlost', (e) => {
       e.preventDefault();
       this.contextLost=true;this.frameMeter.reset();this.emitTelemetry({status:'unavailable',sample:null});
-      this.reportGLError(new Error('WebGL context lost. Reload the page to restore the viewport.'));
+      this.cancelStroke();this.reportGLError(new Error('WebGL context lost. Keep a project backup; the viewport will resume when graphics recover.'));
     });
+
+    el.addEventListener('webglcontextrestored',()=>{this.contextLost=false;document.getElementById('gl-error')?.classList.remove('show');this.rebuildScene(this.ctx.store.project);this.rebuildGrid();this.resize();this.frameMeter.reset();this.requestFrame();});
 
     this.scene.background = new THREE.Color(0x101418);
     this.scene.add(this.batchRoot);
@@ -196,6 +198,8 @@ export class Viewport {
     this.unsubscribeStore=ctx.store.subscribe(()=>{if(ctx.store.revision===seenRevision)return;seenRevision=ctx.store.revision;if(this.stroke)this.cancelStroke();});
     this.startLoop();
   }
+
+  get isBusy():boolean { return this.stroke!==null || this.contextLost; }
 
   private ro: ResizeObserver | null = null;
 

@@ -767,8 +767,10 @@ export class EditorStore {
   private _revision = 0;
   private _savedSnapshot = '';
   private _listeners = new Set<() => void>();
+  private historyCosts = new WeakMap<Project,number>();
 
-  constructor(project: Project) {
+  constructor(project: Project, private readonly historyBudget = 128 * 1024 * 1024) {
+    if(!Number.isFinite(historyBudget)||historyBudget<1)throw new Error('History byte budget must be positive');
     // Canonical validation BEFORE replacing the current project: an invalid
     // seed must never become editor state.
     const validated = validateProject(project);
@@ -816,9 +818,15 @@ export class EditorStore {
 
   private pushHistory(label: string, before: Project): void {
     this._undoStack.push(before);
-    if (this._undoStack.length > MAX_HISTORY) this._undoStack.shift();
     this._redoStack = [];
+    while (this._undoStack.length > MAX_HISTORY || (this.retainedHistoryBytes > this.historyBudget && this._undoStack.length > 1)) this._undoStack.shift();
     this._label = label;
+  }
+
+  get retainedHistoryBytes(): number {
+    return [...this._undoStack,...this._redoStack].reduce((bytes,p)=>{
+      let cost=this.historyCosts.get(p);if(cost===undefined){cost=JSON.stringify(p).length*2;this.historyCosts.set(p,cost);}return bytes+cost;
+    },0);
   }
 
   /**
@@ -897,9 +905,9 @@ export class EditorStore {
     this.emit();
   }
 
-  /** Mark current state as saved (dirty becomes false). */
-  markSaved(): void {
-    this._savedSnapshot = JSON.stringify(this._project);
+  /** Mark the snapshot actually downloaded; edits during a save stay dirty. */
+  markSaved(snapshot: Project = this._project): void {
+    this._savedSnapshot = JSON.stringify(validateProject(snapshot));
     this.emit();
   }
 }

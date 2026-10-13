@@ -1,0 +1,74 @@
+{
+  "baseCommit": "9ec3f5f15500ebf48b3e77ded080a8ce870fb475",
+  "verificationTarget": "Validated source snapshot identified by workingTreeSha256; validation preceded the commit containing this record.",
+  "version": "0.1.1",
+  "unitTests": {
+    "passed": 354,
+    "failed": 0,
+    "authorization": "explicit user approval for this implementation",
+    "scope": "Prior production-readiness implementation; units were not rerun for subsequent worker, header, menu/About or shortcut/backdrop follow-ups."
+  },
+  "browserResults": {
+    "chromium": {
+      "passed": 16,
+      "failed": 0
+    },
+    "firefox": {
+      "passed": 16,
+      "failed": 0
+    },
+    "webkit": {
+      "passed": 16,
+      "failed": 0
+    }
+  },
+  "standalone": "Native backup, About documentation URL, shortcut reference and common backdrop passed in Chromium, Firefox and WebKit",
+  "independentOutputChecks": 4,
+  "applicationBuild": "passed",
+  "documentationBuild": "passed",
+  "sharedCopies": "verified",
+  "workingTreeSha256": "e88ebd9e5eaf2f73700313ea3bcd84fd144126b7791f1f4e57e8d31904e1fe96",
+  "deployedWorkerUpgrade": {
+    "passed": 3,
+    "failed": 0,
+    "origin": "https://bookklik-technologies.github.io/pivo-plate/",
+    "serviceWorkerSha256": "9820ec6204573d2ac54c073e4aead92f635743eb9d042c28dd4bc53743848b7f"
+  },
+  "dependencies": {
+    "blocking": 0,
+    "buildOnlyAdvisories": 3,
+    "exception": "VitePress nested development-server path; static documentation build only"
+  },
+  "verificationDate": "2026-10-13",
+  "developmentWorkerChecks": {
+    "passed": 3,
+    "failed": 0,
+    "coverage": "Vite dev autosave and native save/open in Chromium, Firefox and WebKit; Craft also checks identical error suppression."
+  },
+  "headerChecks": {
+    "passed": 6,
+    "failed": 0,
+    "engines": [
+      "chromium",
+      "firefox",
+      "webkit"
+    ],
+    "widths": [
+      1100,
+      500
+    ],
+    "coverage": "Docs placement and keyboard navigation; Outfit menu weight 400 and normal letter spacing; documentation link opens the hosted docs subpath.",
+    "scope": "Earlier header check; header Docs placement superseded by the menu/About follow-up."
+  },
+  "sharedSuiteVersion": "1.3.0",
+  "menuAboutChecks": {
+    "passed": 12,
+    "failed": 0,
+    "coverage": "Shared menus, light/dark desktop/compact presentation, keyboard navigation/focus, documentation inside About; Ortho also covers missing graphics."
+  },
+  "shortcutBackdropChecks": {
+    "passed": 15,
+    "failed": 0,
+    "coverage": "Shortcut layout, readable Ctrl/Cmd labels, compact/desktop light/dark layouts, fixed header/footer, scrolling, focus, unobstructed Close actions and common About/export/shortcut backdrops in Chromium, Firefox and WebKit; Craft also covers binding validation/apply/cancel/import/export/reset."
+  }
+}

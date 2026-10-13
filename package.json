@@ -1,6 +1,6 @@
 {
   "name": "pivo-plate",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "license": "MIT",
   "author": "a-hakim",
   "private": true,
@@ -12,7 +12,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "test:browser": "node tests/browser-e2e.mjs",
+    "test:browser": "node scripts/browser-readiness.mjs",
     "test:layout": "node tests/layout-check.mjs",
     "test:safety": "node tests/browser-safety.mjs",
     "test:modeling": "node tests/browser-modeling.mjs",
@@ -20,30 +20,45 @@
     "test:erase-hud": "node tests/browser-erase-hud.mjs",
     "test:theme": "node tests/browser-theme.mjs",
     "test:font": "node tests/browser-font.mjs",
-    "build:standalone": "npm run build && node scripts/build-standalone.mjs",
+    "build:standalone": "node scripts/build-standalone.mjs",
     "preview": "vite preview --host 0.0.0.0",
-    "docs:dev": "vitepress dev docs",
+    "docs:dev": "npm run docs:build && node scripts/preview-docs.mjs",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs",
-    "docs:capture": "node scripts/capture-tutorials.mjs"
+    "docs:capture": "node scripts/capture-tutorials.mjs",
+    "check:suite": "node scripts/check-suite.mjs",
+    "check:dependencies": "node scripts/audit-dependencies.mjs",
+    "test:release": "node scripts/browser-readiness.mjs",
+    "test:browser:legacy": "node tests/browser-e2e.mjs",
+    "capture:predecessor": "node scripts/capture-predecessor.mjs",
+    "test:upgrade": "node scripts/browser-upgrade.mjs",
+    "test:standalone": "node scripts/browser-standalone.mjs",
+    "test:workers": "node scripts/browser-workers.mjs",
+    "test:menus": "node scripts/browser-menus.mjs"
   },
   "dependencies": {
     "@fontsource-variable/outfit": "^5.3.0",
-    "fflate": "^0.8.2",
+    "fflate": "0.8.3",
     "lucide": "^1.54.0",
     "pako": "^2.2.0",
     "three": "^0.180.0"
   },
   "devDependencies": {
-    "@playwright/test": "^1.56.0",
-    "@types/node": "^26.6.5",
+    "@playwright/test": "1.64.0",
+    "@types/node": "^24.19.1",
     "@types/pako": "^2.0.4",
     "@types/three": "^0.180.0",
-    "@vitest/coverage-v8": "^3.2.4",
+    "@vitest/coverage-v8": "5.0.4",
+    "fake-indexeddb": "6.2.5",
     "typescript": "^5.9.3",
-    "vite": "^7.1.9",
+    "vite": "7.3.7",
     "vite-plugin-pwa": "^2.0.0",
     "vitepress": "^1.6.4",
-    "vitest": "^3.2.4"
-  }
+    "vitest": "5.0.4"
+  },
+  "engines": {
+    "node": "24.x",
+    "npm": "11.x"
+  },
+  "packageManager": "npm@11.19.0"
 }

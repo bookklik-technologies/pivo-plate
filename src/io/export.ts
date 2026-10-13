@@ -19,9 +19,9 @@ export { ExportError } from './util.ts';
 // OBJ + MTL + textures, zipped
 // ---------------------------------------------------------------------------
 
-export async function exportOBJ(project: Project): Promise<Uint8Array> {
+export async function exportOBJ(project: Project, inspectedAlpha?: Map<string,'opaque'|'cutout'|'blend'>): Promise<Uint8Array> {
   const safe = validateProjectValue(project);
-  const alphaModes = await inspectAlpha(safe);
+  const alphaModes = inspectedAlpha ?? await inspectAlpha(safe);
   const visibleTiles = safe.tiles.filter((t) => isObjectVisibleValue(safe, t.objectId));
   if (visibleTiles.length === 0) {
     throw new ExportError('Nothing to export: the project has no visible tiles');
@@ -151,8 +151,8 @@ function atlasIsTransparent(atlas: Atlas): boolean {
 // GLB
 // ---------------------------------------------------------------------------
 
-export async function exportGLB(project: Project): Promise<Uint8Array> {
+export async function exportGLB(project: Project, inspectedAlpha?: Map<string,'opaque'|'cutout'|'blend'>): Promise<Uint8Array> {
   const safe = validateProjectValue(project);
-  const alphaModes = await inspectAlpha(safe);
+  const alphaModes = inspectedAlpha ?? await inspectAlpha(safe);
   return buildGlb(safe, alphaModes ? new Set([...alphaModes].filter(([,mode])=>mode==='blend').map(([id])=>id)) : undefined);
 }
