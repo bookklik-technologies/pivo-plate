@@ -6,9 +6,9 @@ Each lesson takes roughly 5–10 minutes and includes four screenshots from the 
 
 | Lesson | You will learn | Finished project |
 | --- | --- | --- |
-| [1. Draw a tiled platform](/tutorials/first-platform) | Nine 1×1 stone tiles forming a horizontal 3×3 platform. | <a href="/tutorials/stone-platform.pvp" download>Download checkpoint</a> |
-| [2. Add and organize a wall](/tutorials/add-wall) | A 15-tile scene: a nine-tile floor and a six-tile wall grouped as Wall. | <a href="/tutorials/platform-wall.pvp" download>Download checkpoint</a> |
-| [3. Re-texture a face and export GLB](/tutorials/edit-export) | An editable finished-platform project and a textured GLB with a cracked center tile. | <a href="/tutorials/finished-platform.pvp" download>Download checkpoint</a> |
+| [1. Draw a tiled platform](/tutorials/first-platform) | Nine 1×1 stone tiles forming a horizontal 3×3 platform. | <a href="./stone-platform.pvp" download>Download checkpoint</a> |
+| [2. Add and organize a wall](/tutorials/add-wall) | A 15-tile scene: a nine-tile floor and a six-tile wall grouped as Wall. | <a href="./platform-wall.pvp" download>Download checkpoint</a> |
+| [3. Re-texture a face and export GLB](/tutorials/edit-export) | An editable finished-platform project and a textured GLB with a cracked center tile. | <a href="./finished-platform.pvp" download>Download checkpoint</a> |
 
 ## Before you start
 

@@ -2,7 +2,7 @@
 
 Change the platform's center tile to cracked stone, preserve an editable backup, and export a textured GLB.
 
-**Before you start:** Continue from [Add and organize a wall](/tutorials/add-wall), or open <a href="/tutorials/platform-wall.pvp" download>platform-wall.pvp</a> through **File → Open .pvp…**.
+**Before you start:** Continue from [Add and organize a wall](/tutorials/add-wall), or open <a href="./platform-wall.pvp" download>platform-wall.pvp</a> through **File → Open .pvp…**.
 
 **Time:** about 5–10 minutes. Screenshots show the dark desktop interface; click them for full size.
 
@@ -58,9 +58,9 @@ Click **Export** in the dialog. Keep the downloaded `.glb` for importing into an
 
 An editable finished-platform project and a textured GLB with a cracked center tile.
 
-<a href="/tutorials/finished-platform.pvp" download>Download the finished project</a>.
+<a href="./finished-platform.pvp" download>Download the finished project</a>.
 
-- <a href="/tutorials/finished-platform.glb" download>Textured GLB</a>
+- <a href="./finished-platform.glb" download>Textured GLB</a>
 
 ## If something looks different
 

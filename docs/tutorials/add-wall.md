@@ -2,7 +2,7 @@
 
 Draw a wall three tiles wide and two tiles high along the platform's back edge, then group its six faces into a scene object.
 
-**Before you start:** Continue from [Draw a tiled platform](/tutorials/first-platform), or download <a href="/tutorials/stone-platform.pvp" download>stone-platform.pvp</a> and choose **File → Open .pvp…**.
+**Before you start:** Continue from [Draw a tiled platform](/tutorials/first-platform), or download <a href="./stone-platform.pvp" download>stone-platform.pvp</a> and choose **File → Open .pvp…**.
 
 **Time:** about 5–10 minutes. Screenshots show the dark desktop interface; click them for full size.
 
@@ -58,7 +58,7 @@ Click **Save project** and keep the `.pvp` as **platform-wall.pvp**. Grouping or
 
 A 15-tile scene: a nine-tile floor and a six-tile wall grouped as Wall.
 
-<a href="/tutorials/platform-wall.pvp" download>Download the finished project</a>.
+<a href="./platform-wall.pvp" download>Download the finished project</a>.
 
 ## If something looks different
 

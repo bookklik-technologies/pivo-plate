@@ -58,7 +58,7 @@ Choose **File → Save project** or use the header's Save project button. Keep t
 
 Nine 1×1 stone tiles forming a horizontal 3×3 platform.
 
-<a href="/tutorials/stone-platform.pvp" download>Download the finished project</a>.
+<a href="./stone-platform.pvp" download>Download the finished project</a>.
 
 ## If something looks different
 

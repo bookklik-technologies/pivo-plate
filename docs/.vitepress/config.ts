@@ -1,11 +1,14 @@
 import { defineConfig } from 'vitepress'
 
+const base = process.env.DOCS_BASE || '/'
+
 export default defineConfig({
+  base,
   lang: 'en-US',
   title: 'PiVo Plate',
   description:
     'A local-first browser tile-to-3D modeling editor. Draw tiles on construction planes, organize the scene, export GLB/OBJ.',
-  head: [['link', { rel: 'icon', type: 'image/svg+xml', href: '/icon.svg' }]],
+  head: [['link', { rel: 'icon', type: 'image/svg+xml', href: `${base}icon.svg` }]],
   themeConfig: {
     logo: '/logo.svg',
     nav: [
