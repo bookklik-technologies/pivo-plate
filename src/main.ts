@@ -55,7 +55,7 @@ const docName = h('div', { id: 'doc-name' },
 const menubar = h('nav', { id: 'menubar' });
 let rendererInfoEl: HTMLElement;
 header.append(
-  div('logo-mark suite-brand',h('img',{src:logo,alt:''}),h('span',null,'PiVo Plate')),
+  h('h1',{class:'logo-mark suite-brand'},h('img',{src:logo,alt:''}),h('span',null,'PiVo Plate')),
   menubar,
   div('header-actions',
     iconButton('hdr-undo', ICONS.undo, 'Undo (Ctrl/Cmd+Z)'),
@@ -136,6 +136,7 @@ statusBar.append(
 const toasts = div('');
 toasts.id = 'toasts';
 
+const docsLink=h('a',{href:'./docs/',target:'_blank',rel:'noopener'},'Docs');menubar.append(docsLink);
 header.classList.add('suite-header');menubar.classList.add('suite-menus');header.querySelector('.header-actions')!.classList.add('suite-header-actions');
 const saveState=h('span',{class:'suite-save-state',role:'status','aria-live':'polite'});
 const documentStrip=div('suite-document-strip',docName,saveState,sideToggle);

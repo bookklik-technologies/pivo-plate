@@ -1,5 +1,8 @@
 ---
 layout: home
+titleTemplate: false
+title: PiVo Plate Documentation
+description: Tutorials, guides, file formats, and API reference for PiVo Plate. Learn to build tiled 3D scenes, edit texture atlases, and export GLB or OBJ.
 
 hero:
   name: "PiVo Plate"
