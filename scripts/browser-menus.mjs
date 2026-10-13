@@ -68,6 +68,12 @@ try{for(const engine of (process.env.PIVO_BROWSERS??'chromium,firefox,webkit').s
    const fallback=await browser.newContext({acceptDownloads:true});await fallback.addInitScript(()=>{const original=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(type,...args){if(type==='webgl'||type==='webgl2')return null;return original.call(this,type,...args);};});
    const noGraphics=await fallback.newPage();await noGraphics.goto(url,{waitUntil:'networkidle'});await trigger(noGraphics,'Help').click();await popup(noGraphics).getByRole('button',{name:'About PiVo Ortho',exact:true}).click();const about=noGraphics.getByRole('dialog');await about.waitFor();assert.equal(await about.getByRole('link',{name:'Documentation',exact:true}).count(),1);await about.getByRole('button',{name:'Close',exact:true}).click();
    await trigger(noGraphics,'Help').click();await popup(noGraphics).getByRole('button',{name:'Keyboard shortcuts…',exact:true}).click();await noGraphics.getByRole('dialog').getByRole('button',{name:'Close',exact:true}).click();
+   await trigger(noGraphics,'File').click();await popup(noGraphics).getByRole('button',{name:'Export…',exact:true}).click();
+   const exports=noGraphics.getByRole('dialog');await exports.waitFor();await exports.getByLabel('Export format',{exact:true}).selectOption('texture');
+   const textureDownload=noGraphics.waitForEvent('download');await exports.getByRole('button',{name:'Export',exact:true}).click();
+   const textureBytes=await readFile(await (await textureDownload).path());assert.equal(textureBytes.subarray(0,8).toString('hex'),'89504e470d0a1a0a');
+   await exports.getByRole('button',{name:'Cancel',exact:true}).click();await exports.waitFor({state:'hidden'});
+   results.push({engine,case:'Export dialog and texture download without graphics',passed:true});
    const download=noGraphics.waitForEvent('download');await noGraphics.getByRole('button',{name:'Save project',exact:true}).click();const file=await download;assert.match(file.suggestedFilename(),/\.pvo$/);assert.ok((await readFile(await file.path())).length>100);results.push({engine,case:'About and native backup without graphics',passed:true});await fallback.close();
   }
  }catch(error){results.push({engine,passed:false,error:String(error),stack:error.stack});}finally{await browser?.close();}

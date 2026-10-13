@@ -19,9 +19,11 @@ try{for(const engine of (process.env.PIVO_BROWSERS??'chromium,firefox,webkit').s
   const saved=page.waitForEvent('download');await page.locator('.suite-header-actions').getByRole('button',{name:'Save project',exact:true}).click();
   const download=await saved,bytes=await readFile(await download.path());assert.ok(bytes.length>100);
   const before=await snapshot();
+  // Craft names reopened documents after the filename, which WebKit may sanitize.
+  const expected=name==='pivo-craft'?{...before,name:path.basename(download.suggestedFilename(),'.pvc')}:before;
   await page.locator(name==='pivo-craft'?'#open-file':'#file-input').setInputFiles({name:download.suggestedFilename(),mimeType:'application/octet-stream',buffer:bytes});
   await page.waitForFunction(app=>app==='pivo-craft'?window.pivoCraft.tabs().length===2:document.querySelector('.suite-save-state')?.textContent.includes('Project opened'),name);
-  assert.deepEqual(await snapshot(),before);assert.deepEqual(errors,[]);
+  assert.deepEqual(await snapshot(),expected);assert.deepEqual(errors,[]);
   // Failed retries report once while preserving visible recovery-unavailable state.
   if(name==='pivo-craft'){
    await page.evaluate(()=>{const original=IDBObjectStore.prototype.put;IDBObjectStore.prototype.put=function(...args){if(this.name==='copies')throw new DOMException('Synthetic quota failure','QuotaExceededError');return original.apply(this,args);};});
