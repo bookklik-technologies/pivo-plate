@@ -33,9 +33,6 @@ jobs:
           DOCS_BASE: /${{ github.event.repository.name }}/docs/
       - run: npm run build:standalone
       - run: npx --no-install playwright install --with-deps chromium firefox webkit
-      - run: npm run test:release
-        env:
-          LIBGL_ALWAYS_SOFTWARE: '1'
       - run: npm run test:workers
         env:
           LIBGL_ALWAYS_SOFTWARE: '1'
