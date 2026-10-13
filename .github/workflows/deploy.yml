@@ -1,5 +1,7 @@
-name: Manually validate and release app and docs
+name: Validate and release app and docs
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
@@ -26,6 +28,7 @@ jobs:
       - run: npm run check:suite
       - run: npm run check:dependencies
       - name: Unit validation authorized by manual dispatch
+        if: github.event_name == 'workflow_dispatch'
         run: npm test
       - run: npm run build
       - run: npm run docs:build

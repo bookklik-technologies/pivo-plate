@@ -4,7 +4,7 @@ This release hardens the existing local-first editor. Artwork stays on the devic
 
 ## Release gate
 
-This commit includes the readiness implementation and UI follow-ups. It has not been deployed; the source fingerprint below identifies the validated snapshot. For this implementation, explicit user permission authorized unit execution: all 354 tests passed. Future unit execution requires permission or manual workflow dispatch. The release workflow checks out one exact commit and runs unit validation, builds, dependency checks and browser checks before publishing that same artifact. Pull-request workflows never execute unit tests.
+This commit includes the readiness implementation and UI follow-ups. It has not been deployed; the source fingerprint below identifies the validated snapshot. For this implementation, explicit user permission authorized unit execution: all 354 tests passed. Future unit execution requires permission or manual workflow dispatch. Pushes to main automatically run the release workflow, which checks out one exact commit and runs builds, dependency checks and browser checks before publishing that same artifact. Unit validation runs only when the release workflow or Manual unit validation is manually dispatched. Push and pull-request workflows never execute unit tests.
 
 ## Recovery and compatibility
 
@@ -39,7 +39,7 @@ The currently deployed public service worker and its precached assets were captu
 1. Review and commit the changes, including lockfiles, shared manifests and this report.
 2. Explicitly run unit validation or dispatch Manual unit validation at that commit. The working-tree pass below does not certify a later commit.
 3. Run `npm run build`, `npm run docs:build`, `npm run build:standalone`, `npm run check:suite`, `npm run check:dependencies`, and `npm run test:release`, and `npm run test:standalone`. Browser checks require `npx playwright install chromium firefox webkit`.
-4. Manually dispatch the release workflow on main. It validates the dispatched SHA, captures the deployed predecessor with `npm run capture:predecessor`, runs `npm run test:upgrade`, and packages that same SHA. Deployment depends on all validation passing. Predecessor capture reads public app assets; the browser tests use isolated local profiles.
+4. Push the release commit to main to deploy automatically. To also run unit validation, explicitly dispatch the release workflow on main. It validates the triggering SHA, captures the deployed predecessor with `npm run capture:predecessor`, runs `npm run test:upgrade`, and packages that same SHA. Deployment depends on all applicable validation passing. Predecessor capture reads public app assets; the browser tests use isolated local profiles.
 5. Smoke-check the hosted app/docs, an installed PWA update, and an editable backup after release. To roll back, restore the known-good app commit and dispatch its release pipeline. Keep recovery v2 readable or download backups before returning to a build that only reads legacy storage; never delete databases during rollback.
 
 ## Repository findings
