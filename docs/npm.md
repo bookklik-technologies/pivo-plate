@@ -5,7 +5,7 @@
 After the first manual publication:
 
 ```sh
-npm install pivo-plate
+npm install @bookklik/pivo-plate
 ```
 
 Node.js 24 or newer. This is an ESM-only package with bundled public TypeScript declarations. CommonJS require and a CLI/--headless switch are not supported; headless means the programmatic SDK below. Use dynamic import from CommonJS if needed. Library consumers do not need Vite, TypeScript loaders, a browser or the editor source tree.
@@ -14,17 +14,17 @@ Node.js 24 or newer. This is an ESM-only package with bundled public TypeScript 
 
 | Import | API |
 | --- | --- |
-| `pivo-plate` | Combined portable core and IO |
-| `pivo-plate/headless` | Alias of the combined API |
-| `pivo-plate/core` | Data types, validation and editing |
-| `pivo-plate/io` | Portable serialization/encoding/export |
+| `@bookklik/pivo-plate` | Combined portable core and IO |
+| `@bookklik/pivo-plate/headless` | Alias of the combined API |
+| `@bookklik/pivo-plate/core` | Data types, validation and editing |
+| `@bookklik/pivo-plate/io` | Portable serialization/encoding/export |
 
 Only documented entries are public. Source paths, lib chunks and editor internals are not exported. Generated declarations are included for each entry. Browser download/storage helpers are not exported by the SDK.
 
 ## Example
 
 ```js
-import { createProject, decodeProject, encodeProject, exportGLB } from 'pivo-plate/headless';
+import { createProject, decodeProject, encodeProject, exportGLB } from '@bookklik/pivo-plate/headless';
 import { readFile, writeFile } from 'node:fs/promises';
 
 const empty = createProject('Tiles');

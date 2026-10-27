@@ -7,12 +7,19 @@ import path from 'node:path';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const pkg = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'));
+assert.equal(pkg.name, '@bookklik/pivo-plate', 'Package must use its public scoped name');
 assert.equal(pkg.private, false, 'Package must be publishable');
+assert.equal(pkg.publishConfig?.access, 'public', 'Scoped package must publish publicly');
+const lock = JSON.parse(await readFile(path.join(root, 'package-lock.json'), 'utf8'));
+assert.equal(lock.name, pkg.name, 'Lockfile package name must match');
+assert.equal(lock.packages[''].name, pkg.name, 'Lockfile root package name must match');
 assert.ok(process.env.npm_execpath, 'Run through npm run check:package');
 const packed = spawnSync(process.execPath, [process.env.npm_execpath, 'pack', '--dry-run', '--ignore-scripts', '--json'], { cwd: root, encoding: 'utf8' });
 if (packed.error) throw packed.error;
 assert.equal(packed.status, 0, packed.stderr);
 const inventory = JSON.parse(packed.stdout)[0];
+assert.equal(inventory.name, pkg.name, 'Packed package name must match');
+assert.equal(inventory.version, pkg.version, 'Packed version must match');
 const files = new Set(inventory.files.map(file => file.path));
 for (const name of ['LICENSE', 'README.md', 'docs/npm.md']) assert.ok(files.has(name), 'Missing ' + name);
 for (const entry of Object.values(pkg.exports)) {

@@ -8,7 +8,8 @@ import { fileURLToPath } from 'node:url';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const pkg = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'));
 assert.ok(process.env.npm_execpath, 'Run through npm run check:consumer');
-const workspace = await mkdtemp(path.join(tmpdir(), pkg.name + '-consumer-'));
+const prefix = pkg.name.replace(/[^a-zA-Z0-9._-]/g, '-') + '-consumer-';
+const workspace = await mkdtemp(path.join(tmpdir(), prefix));
 function run(args, cwd = workspace, executable = process.execPath) {
   const result = spawnSync(executable, args, { cwd, encoding: 'utf8', timeout: 180000 });
   if (result.error) throw result.error;
@@ -42,6 +43,6 @@ try {
   const resolved = await realpath(workspace);
   const parent = await realpath(tmpdir());
   assert.equal(path.dirname(resolved), parent, 'Refusing to remove an unexpected directory');
-  assert.ok(path.basename(resolved).startsWith(pkg.name + '-consumer-'));
+  assert.ok(path.basename(resolved).startsWith(prefix));
   await rm(resolved, { recursive: true, force: true });
 }

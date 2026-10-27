@@ -8,7 +8,7 @@ A local-first browser tile-to-3D modeling editor.
 
 ## npm and headless SDK
 
-ESM library for Node.js 24+, with generated TypeScript declarations. After publication, install with `npm install pivo-plate` and import from `pivo-plate/headless`, `pivo-plate/core` or `pivo-plate/io`. No CLI or browser is required for the documented portable operations.
+ESM library for Node.js 24+, with generated TypeScript declarations. After publication, install with `npm install @bookklik/pivo-plate` and import from `@bookklik/pivo-plate/headless`, `@bookklik/pivo-plate/core` or `@bookklik/pivo-plate/io`. No CLI or browser is required for the documented portable operations.
 
 See [SDK usage, supported operations and manual publishing](docs/npm.md). Build with `npm run build:lib`; validate an isolated production install with `npm run check:consumer`. These commands do not run the unit suite.
 
