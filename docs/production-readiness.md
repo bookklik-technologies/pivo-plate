@@ -34,6 +34,8 @@ Chromium represents Chrome/Edge engine coverage; Playwright WebKit is engine cov
 
 The currently deployed public service worker and its precached assets were captured with SHA-256 hashes. An isolated bootstrap client verifies that the new worker stays waiting while the predecessor controls a live client, then activates after closure and preserves legacy recovery bytes plus native downloads. This passed in Chromium, Firefox and WebKit. It covers the exact deployed worker lifecycle; the entire historical editor UI and every previously installed release are not certified. No live deployment occurred.
 
+The bootstrap is served under the existing docs navigation exclusion so it stays isolated from the editor. It waits for activation, then navigates to a precached icon to acquire a controlled client without starting the predecessor editor, even when the predecessor does not claim its first client. Changed workers must remain waiting until the controlled client closes; an uncontrolled observer waits for activation instead of relying on a fixed delay. Byte-identical workers exercise recovery and native downloads without expecting a replacement worker. The report records worker hashes, whether the worker changed, and the failing lifecycle stage plus browser errors when a check fails.
+
 ## Release and rollback
 
 1. Review and commit the changes, including lockfiles, shared manifests and this report.
