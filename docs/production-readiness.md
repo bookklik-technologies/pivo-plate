@@ -24,9 +24,9 @@ File operations use bounded worker jobs; cancellation terminates the job without
 
 PWA updates wait for an explicit decision in each tab and a successful recovery flush. Editing is briefly locked during that flush and worker activation, so new edits cannot escape the stored snapshot. Accepting an update in another tab never forces this tab to reload. Active gestures, dialogs and exports defer updates. Application assets are cached; documentation is online-only. Standalone HTML and documentation routes are excluded from the app navigation fallback.
 
-## Dependency exception
+## Dependency policy (updated 27 October 2026)
 
-Vite 7.3.7, Vitest 5.0.4, fflate 0.8.3 and Playwright 1.64.0 are installed. Remaining advisories concern VitePress 1.6.4's nested Vite/esbuild development server. These dependencies build static documentation only. `docs:dev` builds and serves static files through a loopback-only server; do not invoke the old VitePress development server. The exception check is restricted to those exact nested package locations and fails on any other advisory, including new runtime advisories.
+The npm SDK release replaces the historical documentation-server exceptions with a zero-advisory gate. VitePress 1.6.4 uses an explicit nested Vite 6.4.5 override; fast-uri and serialize-javascript are pinned to patched transitive versions in the root overrides. Browser and documentation builds were checked with these resolutions. `npm run check:dependencies` rejects any reported advisory and runs npm without shell interpolation. See the [npm guide](npm.md) for package preparation and manual publication.
 
 ## Validation limits
 

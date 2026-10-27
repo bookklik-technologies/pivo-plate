@@ -6,6 +6,12 @@ A local-first browser tile-to-3D modeling editor.
 
 ![PiVo Plate editor showing a tiled 3D room and texture atlas](docs/public/screenshots/app.png)
 
+## npm and headless SDK
+
+ESM library for Node.js 24+, with generated TypeScript declarations. After publication, install with `npm install pivo-plate` and import from `pivo-plate/headless`, `pivo-plate/core` or `pivo-plate/io`. No CLI or browser is required for the documented portable operations.
+
+See [SDK usage, supported operations and manual publishing](docs/npm.md). Build with `npm run build:lib`; validate an isolated production install with `npm run check:consumer`. These commands do not run the unit suite.
+
 ## Run locally
 
 Use Node.js 24 and npm.
@@ -34,4 +40,4 @@ Released under the [MIT License](LICENSE). See [third-party notices](THIRD_PARTY
 
 ## Production readiness
 
-See [readiness findings and release procedure](docs/production-readiness.md). Unit tests are manual; pull-request checks cover builds, dependency exceptions and browser workflows.
+See [readiness findings and release procedure](docs/production-readiness.md) for the browser app and [npm release checks](docs/npm.md) for the SDK. Unit tests remain manual; package CI validates builds, dependencies and isolated consumers without executing unit suites.

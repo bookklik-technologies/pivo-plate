@@ -25,7 +25,7 @@ PiVo Plate is a desktop-first v0.1 modeling MVP. The following are deliberate, d
 
 ## Exports
 
-- In-browser GLB export detects fractional alpha and uses BLEND; cutouts use MASK. Headless GLB exports use the documented MASK default unless a probe is supplied.
+- Browser and headless GLB export inspect PNG alpha portably: fractional alpha uses BLEND; cutouts use MASK. An explicit atlas alpha-mode map can override inspection. See the [npm SDK guide](npm.md).
 - OBJ transparency depends on the importing application's MTL/PNG support.
 
 ## Platform

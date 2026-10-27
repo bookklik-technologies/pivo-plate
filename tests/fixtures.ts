@@ -35,6 +35,7 @@ function adler32(data: Uint8Array): number {
 /** Encode raw RGBA pixel data as a real PNG (2x2 default). */
 export function makePng(width = 2, height = 2, rgba?: Uint8Array): Uint8Array {
   const px = rgba ?? new Uint8Array(width * height * 4).fill(200);
+  if (!rgba) for (let offset = 3; offset < px.length; offset += 4) px[offset] = 255;
   const stride = width * 4;
   const raw = new Uint8Array((stride + 1) * height);
   for (let y = 0; y < height; y++) {

@@ -10,3 +10,5 @@ browser-initial.*
 dist-standalone/
 playwright-report/
 test-results/
+lib/
+*.tgz

@@ -1,5 +1,7 @@
 # Core & IO API
 
+For installed package imports, supported headless operations and release steps, see the [npm SDK guide](npm.md). The source paths below describe internal implementation, not public package subpaths.
+
 The renderer-independent engine lives in `src/core/editor.ts`; storage and exporters in `src/io/`. Shared types in `src/core/types.ts` are treated as fixed. Full contract: [CONTRACTS.md](/CONTRACTS).
 
 ## Core — `src/core/editor.ts`
@@ -60,11 +62,13 @@ import {
 ```ts
 import { exportGLB, exportOBJ, ExportError } from './io/export';
 
-const glb = await exportGLB(project);  // self-contained textured GLB
+const glb = await exportGLB(project);  // self-contained textured GLB; portable PNG alpha inspection
 const zip = await exportOBJ(project);  // ZIP: OBJ + MTL + textures
 ```
 
 Exports do not change the source document and reject invalid geometry with useful errors.
+
+Both exporters accept an optional second argument, `Map<string, 'opaque' | 'cutout' | 'blend'>`, keyed by atlas ID. Without an override, PNG alpha is inspected without DOM/canvas in both Node and the browser. Fractional alpha uses GLB BLEND; cutouts use MASK. Node package consumers import these functions from `pivo-plate/io`; browser autosave/download helpers are not part of that SDK entry.
 
 ## UI — `src/ui`
 

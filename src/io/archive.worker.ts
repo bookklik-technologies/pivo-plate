@@ -1,4 +1,4 @@
-import { encodeProject, decodeProject } from './project';
+import { encodeProject, decodeProject } from './container';
 import { exportGLB, exportOBJ } from './export';
 
 self.onmessage = async event => {

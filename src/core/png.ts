@@ -13,7 +13,8 @@ export const PROJECT_PNG_LIMITS = Object.freeze({
   maxInflatedBytes:192*1024*1024, maxManifestBytes:24*1024*1024,
 });
 export interface PngLimits {maxBytes:number;maxDimension:number;maxPixels:number;maxInflatedBytes:number;maxChunks:number;maxAncillaryBytes:number;maxMetadataInflatedBytes:number}
-export interface PngInfo {width:number;height:number;bitDepth:number;colorType:number;interlace:number;byteLength:number;inflatedBytes:number;chunks:number;ancillaryBytes:number}
+export type PngAlphaMode = 'opaque' | 'cutout' | 'blend';
+export interface PngInfo {width:number;height:number;bitDepth:number;colorType:number;interlace:number;byteLength:number;inflatedBytes:number;chunks:number;ancillaryBytes:number;alphaMode?:PngAlphaMode}
 export class PngValidationError extends Error {constructor(message:string){super(`PNG validation: ${message}`);this.name='PngValidationError';}}
 const fail=(message:string):never=>{throw new PngValidationError(message);};
 const table=new Uint32Array(256);
@@ -69,7 +70,7 @@ function checkCompressedMetadata(type:string,data:Uint8Array,remaining:number):n
   return 0;
 }
 function paeth(a:number,b:number,c:number):number {const p=a+b-c,pa=Math.abs(p-a),pb=Math.abs(p-b),pc=Math.abs(p-c);return pa<=pb&&pa<=pc?a:pb<=pc?b:c;}
-function validatePixels(idat:Uint8Array[],layout:Pass[],bitDepth:number,colorType:number,paletteEntries:number,maxInflated:number):number {
+function validatePixels(idat:Uint8Array[],layout:Pass[],bitDepth:number,colorType:number,paletteEntries:number,maxInflated:number,onRow?:(row:Uint8Array,width:number)=>void):number {
   const expected=layout.reduce((n,p)=>n+(p.rowBytes+1)*p.height,0);
   if(!Number.isSafeInteger(expected)||expected>maxInflated)fail('scanline size exceeds inflated-byte budget');
   const bpp=Math.max(1,Math.ceil(channels[colorType]*bitDepth/8));
@@ -84,6 +85,7 @@ function validatePixels(idat:Uint8Array[],layout:Pass[],bitDepth:number,colorTyp
       row[x++]=(byte+predictor)&255;
       if(x===row.length){
         if(colorType===3){const mask=(1<<bitDepth)-1;for(let px=0;px<layout[pass].width;px++){const bit=px*bitDepth,index=(row[bit>>>3]>>>(8-bitDepth-(bit&7)))&mask;if(index>=paletteEntries)fail('palette index outside PLTE');}}
+        onRow?.(row,layout[pass].width);
         const old=previous;previous=row;row=old;x=-1;y++;
         if(y===layout[pass].height){pass++;y=0;if(pass<layout.length){row=new Uint8Array(layout[pass].rowBytes);previous=new Uint8Array(row.length);}}
       }
@@ -104,6 +106,7 @@ export function validatePngBytes(bytes:Uint8Array,expected?:{width:number;height
   let offset=8,width=0,height=0,bitDepth=0,colorType=0,interlace=0,chunkCount=0,ancillary=0,metadataOutput=0;
   let ihdr=false,ended=false,palette=false,trns=false,dataStarted=false,dataEnded=false;
   let paletteEntries=0;const idat:Uint8Array[]=[];
+  let transparency:Uint8Array|undefined;
   const seen=new Set<string>();
   while(offset<bytes.length){
     if(++chunkCount>limits.maxChunks)fail('chunk count exceeds budget');
@@ -127,6 +130,7 @@ export function validatePngBytes(bytes:Uint8Array,expected?:{width:number;height
       if(trns||dataStarted||colorType===4||colorType===6)fail('invalid/duplicate/misordered tRNS');trns=true;
       if(colorType===3&&(!palette||!length||length>paletteEntries))fail('indexed transparency requires valid PLTE');
       if((colorType===0&&length!==2)||(colorType===2&&length!==6))fail('invalid transparency chunk length');
+      transparency=data;
       if(colorType===0||colorType===2)for(let i=0;i<length;i+=2)if((data[i]*256+data[i+1])>2**bitDepth-1)fail('transparency sample outside bit depth');
     } else if(type==='IDAT'){
       if(dataEnded)fail('nonconsecutive IDAT chunks');if(colorType===3&&!palette)fail('indexed PNG missing PLTE');
@@ -160,8 +164,30 @@ export function validatePngBytes(bytes:Uint8Array,expected?:{width:number;height
   }
   if(!ihdr||!ended||!dataStarted)fail('missing IHDR, IDAT or IEND');
   const layout=passes(width,height,channels[colorType]*bitDepth,interlace);
-  const inflatedBytes=validatePixels(idat,layout,bitDepth,colorType,paletteEntries,limits.maxInflatedBytes);
-  const info={width,height,bitDepth,colorType,interlace,byteLength:bytes.length,inflatedBytes,chunks:chunkCount,ancillaryBytes:ancillary};
+  let alphaMode:PngAlphaMode='opaque';
+  const maxSample=2**bitDepth-1;
+  const sample=(row:Uint8Array,index:number):number=>{
+    if(bitDepth===16)return row[index*2]*256+row[index*2+1];
+    if(bitDepth===8)return row[index];
+    const bit=index*bitDepth;return (row[bit>>>3]>>>(8-bitDepth-(bit&7)))&maxSample;
+  };
+  const inspectRow=(row:Uint8Array,rowWidth:number):void=>{
+    if(alphaMode==='blend'||!transparency&&colorType!==4&&colorType!==6)return;
+    for(let pixel=0;pixel<rowWidth;pixel++){
+      let alpha=255,maximum=255;
+      if(colorType===4||colorType===6){maximum=maxSample;alpha=sample(row,pixel*channels[colorType]+channels[colorType]-1);}
+      else if(colorType===3)alpha=transparency?.[sample(row,pixel)]??255;
+      else if(transparency){
+        let matches=true;
+        for(let channel=0;channel<channels[colorType];channel++)if(sample(row,pixel*channels[colorType]+channel)!==transparency[channel*2]*256+transparency[channel*2+1]){matches=false;break;}
+        if(matches)alpha=0;
+      }
+      if(alpha>0&&alpha<maximum){alphaMode='blend';return;}
+      if(alpha===0)alphaMode='cutout';
+    }
+  };
+  const inflatedBytes=validatePixels(idat,layout,bitDepth,colorType,paletteEntries,limits.maxInflatedBytes,inspectRow);
+  const info={width,height,bitDepth,colorType,interlace,byteLength:bytes.length,inflatedBytes,chunks:chunkCount,ancillaryBytes:ancillary,alphaMode};
   expectedSize(info,expected);return Object.freeze(info);
 }
 
