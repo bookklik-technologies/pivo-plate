@@ -38,10 +38,12 @@ The bootstrap is served under the existing docs navigation exclusion so it stays
 
 ## Release and rollback
 
+Automated pushes to main validate and deploy once; the separate readiness workflow runs on pull requests or manual dispatch, not again on main pushes. Browser jobs are pinned to Ubuntu 24.04 and default to Chromium headless-shell-only installation and execution (`PIVO_BROWSERS=chromium`). Enable `full_browser_validation` when manually dispatching readiness or release to include Firefox and WebKit. Manual browser validation does not authorize unit tests; release units require the separate `run_unit_tests` opt-in, or use Manual unit validation. Local browser scripts still default to all three engines when `PIVO_BROWSERS` is unset. npm package validation remains unchanged and browser-free.
+
 1. Review and commit the changes, including lockfiles, shared manifests and this report.
 2. Explicitly run unit validation or dispatch Manual unit validation at that commit. The working-tree pass below does not certify a later commit.
 3. Run `npm run build`, `npm run docs:build`, `npm run build:standalone`, `npm run check:suite`, `npm run check:dependencies`, and `npm run test:release`, and `npm run test:standalone`. Browser checks require `npx playwright install chromium firefox webkit`.
-4. Push the release commit to main to deploy automatically. To also run unit validation, explicitly dispatch the release workflow on main. It validates the triggering SHA, captures the deployed predecessor with `npm run capture:predecessor`, runs `npm run test:upgrade`, and packages that same SHA. Deployment depends on all applicable validation passing. Predecessor capture reads public app assets; the browser tests use isolated local profiles.
+4. Push the release commit to main to deploy automatically. To also run unit validation, explicitly dispatch the release workflow on main with `run_unit_tests` enabled. It validates the triggering SHA, captures the deployed predecessor with `npm run capture:predecessor`, runs `npm run test:upgrade`, and packages that same SHA. Deployment depends on all applicable validation passing. Predecessor capture reads public app assets; the browser tests use isolated local profiles.
 5. Smoke-check the hosted app/docs, an installed PWA update, and an editable backup after release. To roll back, restore the known-good app commit and dispatch its release pipeline. Keep recovery v2 readable or download backups before returning to a build that only reads legacy storage; never delete databases during rollback.
 
 ## Repository findings

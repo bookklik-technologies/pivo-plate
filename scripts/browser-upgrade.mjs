@@ -25,7 +25,8 @@ const server=createServer(async(req,res)=>{try{
  }catch{res.writeHead(404);res.end();}});
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 const url=`http://127.0.0.1:${server.address().port}/${name}/`,results=[];
-try{for(const [engine,type] of Object.entries({chromium,firefox,webkit})){
+try{for(const engine of (process.env.PIVO_BROWSERS??'chromium,firefox,webkit').split(',')){
+ const type={chromium,firefox,webkit}[engine];
  let browser,stage='launch';const diagnostics=[];try{
   upgraded=false;
   browser=await type.launch({headless:true,...(engine==='chromium'?{args:['--use-angle=swiftshader','--enable-unsafe-swiftshader']}:{})});

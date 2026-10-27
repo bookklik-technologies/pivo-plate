@@ -3,6 +3,15 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      full_browser_validation:
+        description: Run Chromium, Firefox and WebKit instead of Chromium only
+        type: boolean
+        default: false
+      run_unit_tests:
+        description: Explicitly authorize unit validation for this release
+        type: boolean
+        default: false
 permissions:
   contents: read
 concurrency:
@@ -11,11 +20,13 @@ concurrency:
 jobs:
   validate-and-build:
     if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       pages: read
     timeout-minutes: 30
+    env:
+      PIVO_BROWSERS: ${{ inputs.full_browser_validation && 'chromium,firefox,webkit' || 'chromium' }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -28,14 +39,19 @@ jobs:
       - run: npm run check:suite
       - run: npm run check:dependencies
       - name: Unit validation authorized by manual dispatch
-        if: github.event_name == 'workflow_dispatch'
+        if: github.event_name == 'workflow_dispatch' && inputs.run_unit_tests
         run: npm test
       - run: npm run build
       - run: npm run docs:build
         env:
           DOCS_BASE: /${{ github.event.repository.name }}/docs/
       - run: npm run build:standalone
-      - run: npx --no-install playwright install --with-deps chromium firefox webkit
+      - name: Install Chromium headless shell
+        if: env.PIVO_BROWSERS == 'chromium'
+        run: npx --no-install playwright install --with-deps --only-shell chromium
+      - name: Install full browser matrix
+        if: env.PIVO_BROWSERS != 'chromium'
+        run: npx --no-install playwright install --with-deps --only-shell chromium firefox webkit
       - run: npm run test:workers
         env:
           LIBGL_ALWAYS_SOFTWARE: '1'

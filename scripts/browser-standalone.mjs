@@ -4,7 +4,8 @@ import path from 'node:path';
 import {pathToFileURL} from 'node:url';
 import assert from 'node:assert/strict';
 const name=JSON.parse(await readFile('package.json','utf8')).name,results=[];
-for(const [engine,type] of Object.entries({chromium,firefox,webkit})){
+for(const engine of (process.env.PIVO_BROWSERS??'chromium,firefox,webkit').split(',')){
+ const type={chromium,firefox,webkit}[engine];
  let browser;try{
   browser=await type.launch({headless:true,...(engine==='chromium'?{args:['--use-angle=swiftshader','--enable-unsafe-swiftshader']}:{})});
   const context=await browser.newContext({acceptDownloads:true}),page=await context.newPage(),errors=[];

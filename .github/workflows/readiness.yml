@@ -1,14 +1,23 @@
 name: Production readiness
 on:
   pull_request:
-  push:
-    branches: [main]
+  workflow_dispatch:
+    inputs:
+      full_browser_validation:
+        description: Run Chromium, Firefox and WebKit instead of Chromium only
+        type: boolean
+        default: false
 permissions:
   contents: read
+concurrency:
+  group: readiness-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   browser-and-build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
+    env:
+      PIVO_BROWSERS: ${{ inputs.full_browser_validation && 'chromium,firefox,webkit' || 'chromium' }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -23,7 +32,12 @@ jobs:
         env:
           DOCS_BASE: /${{ github.event.repository.name }}/docs/
       - run: npm run build:standalone
-      - run: npx --no-install playwright install --with-deps chromium firefox webkit
+      - name: Install Chromium headless shell
+        if: env.PIVO_BROWSERS == 'chromium'
+        run: npx --no-install playwright install --with-deps --only-shell chromium
+      - name: Install full browser matrix
+        if: env.PIVO_BROWSERS != 'chromium'
+        run: npx --no-install playwright install --with-deps --only-shell chromium firefox webkit
       - run: npm run test:workers
         env:
           LIBGL_ALWAYS_SOFTWARE: '1'
