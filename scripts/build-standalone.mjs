@@ -37,7 +37,6 @@ content=content.replace(/(?:href|src)=["']([^"']+)["']/g,(match,url)=>{
  const type=asset.fileName.endsWith('.svg')?'image/svg+xml':asset.fileName.endsWith('.png')?'image/png':'application/octet-stream';
  return match.replace(url,`data:${type};base64,${Buffer.from(asset.source).toString('base64')}`);
 });
-await mkdir(path.join(root,'dist'),{recursive:true});
 const noticePaths=[path.join(root,'LICENSE'),path.join(root,'THIRD_PARTY_NOTICES.txt'),path.join(root,'THIRD_PARTY_NOTICES.md')];
 for(const directory of ['docs/third-party','docs/licenses']){
  const folder=path.join(root,directory);if(existsSync(folder))noticePaths.push(...readdirSync(folder).filter(file=>file.endsWith('.txt')).map(file=>path.join(folder,file)));
@@ -45,6 +44,7 @@ for(const directory of ['docs/third-party','docs/licenses']){
 const notices=noticePaths.filter(existsSync).map(file=>readFileSync(file,'utf8')).join('\n\n');
 content=content.replace('</body>',()=>`<!-- Dependency notices\n${notices.replace(/--/g,'—')}\n--></body>`);
 const target=path.join(root,'dist',`${pkg.name}-standalone.html`);
+await mkdir(path.dirname(target),{recursive:true});
 await writeFile(target,content);
 if(pkg.name==='pivo-craft')await writeFile(path.join(root,'dist','standalone.html'),content);
 console.log(`Standalone editor: ${target} (${Buffer.byteLength(content)} bytes)`);
