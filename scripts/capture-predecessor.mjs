@@ -2,7 +2,7 @@
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import path from 'node:path';
-const name=JSON.parse(await readFile('package.json','utf8')).name;
+const name=JSON.parse(await readFile('package.json','utf8')).name.split('/').pop();
 const origin=`https://bookklik-technologies.github.io/${name}/`;
 const root=path.resolve('test-results/predecessor');await mkdir(root,{recursive:true});
 const fetchFile=async file=>{
