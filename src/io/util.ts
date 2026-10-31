@@ -1,6 +1,6 @@
 // Internal helpers shared by src/io modules. Not part of the public IO contract;
 // public names live in project.ts / export.ts per docs/CONTRACTS.md.
-import { validatePngBytes, pngDataUrlBytes, pngBytesDataUrl, PNG_LIMITS, PROJECT_PNG_LIMITS } from '../core/png';
+import { validatePngBytes, pngDataUrlBytes, pngBytesDataUrl, pngCrc32, PNG_LIMITS, PROJECT_PNG_LIMITS } from '../core/png';
 import { zipSync, unzipSync, strFromU8, strToU8 } from 'fflate';
 import type { Project } from '../core/types.ts';
 
@@ -137,6 +137,52 @@ export interface OpenedContainer {
   textures: Map<string, Uint8Array>; // atlasId -> PNG bytes
 }
 
+function inspectZip(bytes: Uint8Array): Map<string, { size: number; crc: number }> {
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  let end = -1;
+  for (let offset = bytes.length - 22; offset >= Math.max(0, bytes.length - 65557); offset--) {
+    if (view.getUint32(offset, true) === 0x06054b50 && offset + 22 + view.getUint16(offset + 20, true) === bytes.length) {
+      end = offset;
+      break;
+    }
+  }
+  if (end < 0) throw new ContainerError('Missing ZIP directory');
+  const count = view.getUint16(end + 10, true);
+  const centralSize = view.getUint32(end + 12, true);
+  const centralOffset = view.getUint32(end + 16, true);
+  if (count > LIMITS.maxEntries) throw new ContainerError('Project archive contains too many files');
+  if (view.getUint16(end + 4, true) !== 0 || view.getUint16(end + 6, true) !== 0 || view.getUint16(end + 8, true) !== count || centralOffset + centralSize !== end) {
+    throw new ContainerError('Unsupported or inconsistent ZIP directory');
+  }
+  const directory = new Map<string, { size: number; crc: number }>();
+  const decoder = new TextDecoder('utf-8', { fatal: true });
+  let position = centralOffset;
+  for (let index = 0; index < count; index++) {
+    if (position + 46 > end || view.getUint32(position, true) !== 0x02014b50) throw new ContainerError('Invalid ZIP directory entry');
+    const flags = view.getUint16(position + 8, true);
+    const method = view.getUint16(position + 10, true);
+    const crc = view.getUint32(position + 16, true);
+    const packed = view.getUint32(position + 20, true);
+    const size = view.getUint32(position + 24, true);
+    const nameLength = view.getUint16(position + 28, true);
+    const next = position + 46 + nameLength + view.getUint16(position + 30, true) + view.getUint16(position + 32, true);
+    const local = view.getUint32(position + 42, true);
+    if (next > end || local + 30 > centralOffset || view.getUint16(position + 34, true) !== 0 || (flags & 1) !== 0 || (method !== 0 && method !== 8)) throw new ContainerError('Unsupported ZIP entry');
+    const name = decoder.decode(bytes.subarray(position + 46, position + 46 + nameLength));
+    if (!safeEntryPath(name)) throw new ContainerError(`Project archive contains a disallowed path "${name}" (expected project.json or atlases/<id>.png)`);
+    if (directory.has(name)) throw new ContainerError('Duplicate ZIP entry');
+    if (view.getUint32(local, true) !== 0x04034b50 || view.getUint16(local + 6, true) !== flags || view.getUint16(local + 8, true) !== method) throw new ContainerError('Inconsistent ZIP local header');
+    const localNameLength = view.getUint16(local + 26, true);
+    const start = local + 30 + localNameLength + view.getUint16(local + 28, true);
+    if (start + packed > centralOffset || decoder.decode(bytes.subarray(local + 30, local + 30 + localNameLength)) !== name) throw new ContainerError('Inconsistent ZIP payload');
+    if ((flags & 8) === 0 && (view.getUint32(local + 14, true) !== crc || view.getUint32(local + 18, true) !== packed || view.getUint32(local + 22, true) !== size)) throw new ContainerError('Inconsistent ZIP entry sizes or checksum');
+    directory.set(name, { size, crc });
+    position = next;
+  }
+  if (position !== end) throw new ContainerError('ZIP directory count mismatch');
+  return directory;
+}
+
 /** Parse and safety-check a .pvp archive. */
 export function openContainer(bytes: Uint8Array): OpenedContainer {
   if (!(bytes instanceof Uint8Array) || bytes.length === 0) {
@@ -148,7 +194,9 @@ export function openContainer(bytes: Uint8Array): OpenedContainer {
   let raw: Record<string, Uint8Array>;
   let declaredTotal = 0, entryCount = 0;
   const seen = new Set<string>();
+  let directory: ReturnType<typeof inspectZip>;
   try {
+    directory = inspectZip(bytes);
     raw = unzipSync(bytes, {
       filter: (file) => {
         if (++entryCount > LIMITS.maxEntries) throw new ContainerError('Project archive contains too many files');
@@ -171,6 +219,11 @@ export function openContainer(bytes: Uint8Array): OpenedContainer {
     );
   }
   const names = Object.keys(raw);
+  if (names.length !== directory.size) throw new ContainerError('ZIP entry inventory mismatch');
+  for (const name of names) {
+    const expected = directory.get(name);
+    if (!expected || raw[name].length !== expected.size || pngCrc32(raw[name]) !== expected.crc) throw new ContainerError('ZIP entry size or checksum mismatch');
+  }
   if (names.length === 0) {
     throw new ContainerError('Project archive contains no files');
   }

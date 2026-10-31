@@ -7,6 +7,9 @@ let report;
 try { report = JSON.parse(result.stdout); }
 catch { throw new Error('Dependency audit unavailable: ' + result.stderr); }
 if (report.error) throw new Error(JSON.stringify(report.error));
+if (![0, 1].includes(result.status) || report.auditReportVersion !== 2 || !report.vulnerabilities || !report.metadata?.vulnerabilities) {
+  throw new Error('Dependency audit unavailable: unexpected npm audit result');
+}
 const vulnerabilities = Object.entries(report.vulnerabilities ?? {}).map(([name, value]) => ({ name, severity: value.severity, nodes: value.nodes }));
 console.log(JSON.stringify({ counts: report.metadata?.vulnerabilities, blocking: vulnerabilities }, null, 2));
 if (result.status !== 0 || vulnerabilities.length) process.exitCode = 1;

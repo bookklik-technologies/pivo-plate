@@ -3,7 +3,7 @@ import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
 import assert from 'node:assert/strict';
-const name=JSON.parse(await readFile('package.json','utf8')).name,results=[];
+const name=JSON.parse(await readFile('package.json','utf8')).name.split('/').pop(),results=[];
 for(const engine of (process.env.PIVO_BROWSERS??'chromium,firefox,webkit').split(',')){
  const type={chromium,firefox,webkit}[engine];
  let browser;try{

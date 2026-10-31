@@ -1,0 +1,7 @@
+:root[data-pivo-embedded='true'] {
+  --pivo-shell-header-height: 0px;
+}
+
+:root[data-pivo-embedded='true'] .suite-header {
+  display: none !important;
+}

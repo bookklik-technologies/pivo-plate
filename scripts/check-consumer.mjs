@@ -33,6 +33,7 @@ try {
     "import * as core from '" + pkg.name + "/core';",
     "import * as io from '" + pkg.name + "/io';",
     "export const project: api.Project = api.createProject();",
+    "export const editor: api.HeadlessEditor = headless.createHeadlessEditor(project);",
     "export const create: typeof core.createProject = headless.createProject;",
     "export const projectName: string = project.name;",
     "export const codecs: typeof io = io;",

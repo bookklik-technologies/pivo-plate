@@ -4,7 +4,7 @@ import {readFile,writeFile,stat,mkdir} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import path from 'node:path';
 import assert from 'node:assert/strict';
-const name=JSON.parse(await readFile('package.json','utf8')).name;
+const name=JSON.parse(await readFile('package.json','utf8')).name.split('/').pop();
 const capture=JSON.parse(await readFile('test-results/predecessor/capture.json','utf8'));
 for(const [file,hash] of Object.entries(capture.files))assert.equal(createHash('sha256').update(await readFile(path.join('test-results/predecessor',file))).digest('hex'),hash);
 const currentWorkerSha256=createHash('sha256').update(await readFile('dist/sw.js')).digest('hex');

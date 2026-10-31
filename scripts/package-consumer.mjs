@@ -9,6 +9,12 @@ assert.equal(typeof globalThis.document, 'undefined');
 assert.equal(typeof globalThis.window, 'undefined');
 assert.equal(api.createProject, core.createProject);
 assert.equal(api.createProject, headless.createProject);
+assert.equal(api.createHeadlessEditor, headless.createHeadlessEditor);
+const editor = headless.createHeadlessEditor();
+editor.transact(draft => { draft.name = 'embedded consumer'; });
+const snapshot = editor.getProject();
+snapshot.name = 'detached snapshot';
+assert.equal(editor.getProject().name, 'embedded consumer');
 assert.equal(io.downloadFile, undefined);
 assert.equal(io.saveAutosave, undefined);
 if ('saveNative' in io) {

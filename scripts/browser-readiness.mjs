@@ -4,7 +4,7 @@ import {readFile,stat,mkdir,writeFile} from 'node:fs/promises';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 
-const root=process.cwd(),pkg=JSON.parse(await readFile('package.json','utf8')),name=pkg.name;
+const root=process.cwd(),pkg=JSON.parse(await readFile('package.json','utf8')),name=pkg.name.split('/').pop();
 const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.svg':'image/svg+xml','.png':'image/png','.woff2':'font/woff2','.json':'application/json','.webmanifest':'application/manifest+json'};
 let releaseRevision=0;
 const server=createServer(async(req,res)=>{try{

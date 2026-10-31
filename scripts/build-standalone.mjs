@@ -15,6 +15,7 @@ const output=Array.isArray(results)?results[0].output:results.output;
 const chunks=output.filter(item=>item.type==='chunk');
 if(chunks.length!==1)throw Error('Standalone packaging requires one JavaScript entry');
 const pkg=JSON.parse(await readFile(path.join(root,'package.json'),'utf8'));
+const name=pkg.name.split('/').pop();
 const html=output.find(item=>item.type==='asset'&&item.fileName==='index.html');
 if(!html)throw Error('Standalone build has no index.html');
 let content=String(html.source);
@@ -43,8 +44,8 @@ for(const directory of ['docs/third-party','docs/licenses']){
 }
 const notices=noticePaths.filter(existsSync).map(file=>readFileSync(file,'utf8')).join('\n\n');
 content=content.replace('</body>',()=>`<!-- Dependency notices\n${notices.replace(/--/g,'—')}\n--></body>`);
-const target=path.join(root,'dist',`${pkg.name}-standalone.html`);
+const target=path.join(root,'dist',`${name}-standalone.html`);
 await mkdir(path.dirname(target),{recursive:true});
 await writeFile(target,content);
-if(pkg.name==='pivo-craft')await writeFile(path.join(root,'dist','standalone.html'),content);
+if(name==='pivo-craft')await writeFile(path.join(root,'dist','standalone.html'),content);
 console.log(`Standalone editor: ${target} (${Buffer.byteLength(content)} bytes)`);

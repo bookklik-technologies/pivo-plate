@@ -3,7 +3,7 @@ import {chromium,firefox,webkit} from 'playwright';
 import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import path from 'node:path';
 import assert from 'node:assert/strict';
-const name=JSON.parse(await readFile('package.json','utf8')).name;
+const name=JSON.parse(await readFile('package.json','utf8')).name.split('/').pop();
 const server=await createServer({configFile:path.resolve('vite.config.ts'),server:{host:'127.0.0.1',port:0,open:false}});
 await server.listen();const address=server.httpServer.address(),url=`http://127.0.0.1:${address.port}/`,results=[];
 try{for(const engine of (process.env.PIVO_BROWSERS??'chromium,firefox,webkit').split(',')){

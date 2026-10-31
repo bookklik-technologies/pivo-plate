@@ -1,6 +1,9 @@
 import {archiveAsync} from './io/archive';
 import {inspectAlpha} from './io/alpha';
 import {installUpdatePrompt} from './ui/suite-pwa';
+import {recoveryEnabled,assertRecoveryUpdateSafe,embeddedMode} from './ui/recovery-policy';
+import './ui/embed.css';
+if(embeddedMode)document.documentElement.dataset.pivoEmbedded='true';
 import {listRecoveryCopies,selectRecovery,flushRecoveryStorage} from './io/project';
 declare const __STANDALONE__:boolean;
 /**
@@ -617,7 +620,7 @@ function refreshStatus(): void {
   if (dot) dot.classList.toggle('clean', !dirty);
   const nameEl = document.getElementById('doc-name-text');
   if (nameEl) nameEl.textContent = `${currentFileName}${dirty ? ' •' : ''}`;
-  saveState.textContent=(dirty?'Unsaved edits':cleanDocumentState)+' · '+(!recoveryAvailable?'Recovery unavailable':recoveryPending?'Recovery awaiting review':recoverySnapshot===snapNow?'Browser recovery stored':!recoverySnapshot&&!dirty?'No browser recovery':'Recovery pending');saveState.title=saveState.textContent??'';
+  saveState.textContent=(dirty?'Unsaved edits':cleanDocumentState)+' · '+(!recoveryEnabled?'Browser recovery disabled':!recoveryAvailable?'Recovery unavailable':recoveryPending?'Recovery awaiting review':recoverySnapshot===snapNow?'Browser recovery stored':!recoverySnapshot&&!dirty?'No browser recovery':'Recovery pending');saveState.title=saveState.textContent??'';
   const info = viewport.getRendererInfo();
   if (rendererInfoEl && info) {
     rendererInfoEl.textContent = `${info.version} ${info.drawCalls}dc ${info.triangles}tri`;
@@ -911,6 +914,7 @@ function showExportDialog():void {
  const close=mountModal(overlay,box,format);cancel.onclick=close;run.onclick=()=>{const kind=format.value as 'glb'|'obj';close();void exportModel(kind);};
 }
 async function reviewRecovery():Promise<void> {
+ if(!recoveryEnabled){toast('Browser recovery is disabled for this session. Save project downloads for backups.','info');return;}
  if(recoveryPending){recoverBanner.scrollIntoView();recoverBanner.querySelector<HTMLButtonElement>('button')?.focus();return;}
  try{await recoveryWriteQueue;const record=await inspectAutosave(true);recoveryAvailable=true;if(autosaveDirty)scheduleAutosave();if(record.status==='empty'){toast('No browser recovery copy is stored. Save project downloads an editable .pvp backup.','info');return;}showRecoverBanner(record);refreshStatus();recoverBanner.querySelector<HTMLButtonElement>('button')?.focus();}catch(err){recoveryAvailable=false;refreshStatus();toastError(err,'Recovery');}
 }
@@ -967,6 +971,7 @@ function cancelAutosaveTimer(): void {
 }
 
 function queueRecoveryWrite(snapshot:Project): void {
+  if(!recoveryEnabled)return;
   if(!recoveryAvailable || !recoveryCheckComplete) return;
   // Serialize writes so a slower old request cannot overwrite a newer snapshot.
   const safe=validateProject(snapshot);
@@ -976,6 +981,7 @@ function queueRecoveryWrite(snapshot:Project): void {
 }
 
 function scheduleAutosave(): void {
+  if(!recoveryEnabled)return;
   if(store.revision===lastAutosaveRevision&&!autosaveDirty) return;
   lastAutosaveRevision=store.revision;
   autosaveDirty=true;
@@ -1069,6 +1075,7 @@ function showRecoverBanner(record:Awaited<ReturnType<typeof inspectAutosave>>): 
 
 function wireAutosaveLifecycle(): void {
   const flush=async()=>{
+    if(!recoveryEnabled){assertRecoveryUpdateSafe(store.dirty || JSON.stringify(store.project)!==savedMarker);return;}
     cancelAutosaveTimer();
     if(!recoveryAvailable||!recoveryCheckComplete)throw new Error('Resolve recovery or download a backup before updating');
     queueRecoveryWrite(store.project);await recoveryWriteQueue;

@@ -2,7 +2,7 @@ import {chromium,firefox,webkit} from 'playwright';
 import {createServer} from 'node:http';
 import {readFile,stat,mkdir,writeFile} from 'node:fs/promises';
 import path from 'node:path';import assert from 'node:assert/strict';
-const name=JSON.parse(await readFile('package.json','utf8')).name;
+const name=JSON.parse(await readFile('package.json','utf8')).name.split('/').pop();
 const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.svg':'image/svg+xml','.png':'image/png','.woff2':'font/woff2','.webmanifest':'application/manifest+json'};
 const server=createServer(async(req,res)=>{try{
  const pathname=decodeURIComponent(new URL(req.url,'http://localhost').pathname);if(!pathname.startsWith(`/${name}/`)){res.writeHead(404);res.end();return;}

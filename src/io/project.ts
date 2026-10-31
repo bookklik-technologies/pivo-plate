@@ -1,4 +1,5 @@
 import { RecoveryStore, type RecoveryEntry } from '../ui/suite-recovery';
+import { recoveryEnabled } from '../ui/recovery-policy';
 import type { Project } from '../core/types.ts';
 import { PayloadError, StorageError, deepJsonEqual } from './util.ts';
 import { validateProjectValue } from './validate.ts';
@@ -51,6 +52,7 @@ const recoveryStore=new RecoveryStore('pivo-plate-recovery-v2');
 let initialization:Promise<void>|null=null;
 let pendingEntry:RecoveryEntry|null=null;
 async function migrateRecovery():Promise<void>{
+ if(!recoveryEnabled)return;
  if(initialization)return initialization;
  initialization=(async()=>{
   const db=await openDb();
@@ -69,6 +71,7 @@ function rawRecovery(value:unknown):string {
  try{return JSON.stringify(value)??String(value);}catch{return String(value);}
 }
 export async function saveAutosave(project:Project):Promise<void>{
+ if(!recoveryEnabled)return;
  const safe=validateProjectValue(project);
  try {
   await migrateRecovery();
@@ -80,6 +83,7 @@ export type RecoveryRecord=
  | {status:'valid';raw:string;project:Project;entry:RecoveryEntry}
  | {status:'invalid';raw:string;error:string;entry:RecoveryEntry};
 export async function listRecoveryCopies(includeCurrent=true):Promise<RecoveryEntry[]>{
+ if(!recoveryEnabled)return [];
  try {
   await migrateRecovery();const entries=await recoveryStore.list();
   return includeCurrent?entries:entries.filter(entry=>entry.id!==`${recoveryStore.session}:document`);
@@ -96,6 +100,7 @@ export async function inspectAutosave(includeCurrent=false):Promise<RecoveryReco
 }
 export function selectRecovery(entry:RecoveryEntry):RecoveryRecord{pendingEntry=entry;return recoveryRecord(entry);}
 export async function resolveRecovery(expectedRaw:string,discard=false):Promise<void>{
+ if(!recoveryEnabled)throw new StorageError('Browser recovery is disabled');
  const entry=pendingEntry;
  if(!entry||rawRecovery(entry.data)!==expectedRaw)throw new StorageError('Recovery selection changed; reopen Recovery.');
  if(!discard){const record=recoveryRecord(entry);if(record.status!=='valid')throw new PayloadError('Invalid recovery cannot be restored');await saveAutosave(record.project);}
@@ -119,7 +124,7 @@ export async function loadAutosave():Promise<Project|null>{
 export async function clearAutosave():Promise<void>{
  const entry=(await listRecoveryCopies()).find(entry=>entry.id===`${recoveryStore.session}:document`);if(entry)await recoveryStore.discard(entry);
 }
-export async function flushRecoveryStorage():Promise<void>{await recoveryStore.flush();}
+export async function flushRecoveryStorage():Promise<void>{if(recoveryEnabled)await recoveryStore.flush();}
 
 // ---------------------------------------------------------------------------
 // Portable downloads
